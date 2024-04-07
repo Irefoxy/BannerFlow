@@ -1,16 +1,12 @@
 package handlers
 
 import (
+	e "BannerFlow/internal/domain/errors"
+	"BannerFlow/pkg/api"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
-
-type HandlerError struct {
-	error
-	Status int
-	Data   any
-}
 
 func (b *HandlerBuilder) errorMiddleware(c *gin.Context) {
 	c.Next()
@@ -19,30 +15,45 @@ func (b *HandlerBuilder) errorMiddleware(c *gin.Context) {
 	if lastErr == nil {
 		return
 	}
-	var handlerErr *HandlerError
-	ok := errors.As(lastErr, &handlerErr)
+	b.log(c)
 
-	if !ok || handlerErr.Status == http.StatusInternalServerError {
-		c.String(http.StatusInternalServerError, "Something went wrong")
-		return
+	// TODO check error in the end
+	switch {
+	case errors.Is(lastErr, e.ErrorNoPermission):
+		c.Status(http.StatusForbidden)
+	case errors.Is(lastErr, e.ErrorAuthenticationFailed):
+		c.Status(http.StatusUnauthorized)
+	case errors.Is(lastErr, e.ErrorBadRequest):
+		sendJSONError(c, http.StatusBadRequest, lastErr.Error())
+	default:
+		sendJSONError(c, http.StatusInternalServerError, "something went wrong")
 	}
-	// TODO delete data?
-	/*if err.Data != nil {
-		switch err.Data.(type) {
-		case string:
-			c.String(err.Status, "%s", err.Data)
-		default:
-			c.JSON(err.Status, err.Data)
-		}
-		return
-	}*/
-	c.Status(handlerErr.Status)
+}
+
+func sendJSONError(c *gin.Context, status int, msg string) {
+	c.JSON(status, openapi.UserBannerGet400Response{
+		Error: &msg,
+	})
 }
 
 func (b *HandlerBuilder) authenticate(c *gin.Context) {
-	panic("implement me")
+	err := b.handleAuthentication(c)
+	if err != nil {
+		collectErrors(c, err)
+	}
+}
+
+func (b *HandlerBuilder) handleAuthentication(c *gin.Context) error {
+	token := c.GetHeader(tokenName)
+	if token == "" {
+		return e.ErrorNoToken
+	}
+	return b.authenticator.Authenticate(token)
 }
 
 func (b *HandlerBuilder) authorize(c *gin.Context) {
-	panic("implement me")
+	token := c.GetHeader(tokenName)
+	if !b.authorizer.IsAdmin(token) {
+		collectErrors(c, e.ErrorNoPermission)
+	}
 }

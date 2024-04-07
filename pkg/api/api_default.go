@@ -19,18 +19,17 @@ import (
 	"strings"
 )
 
-
 // DefaultApiService DefaultApi service
 type DefaultApiService service
 
 type ApiBannerGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DefaultApiService
-	token *string
-	featureId *int32
-	tagId *int32
-	limit *int32
-	offset *int32
+	token      *string
+	featureId  *int32
+	tagId      *int32
+	limit      *int32
+	offset     *int32
 }
 
 // Токен админа
@@ -66,24 +65,25 @@ func (r ApiBannerGetRequest) Execute() ([]BannerGet200ResponseInner, *http.Respo
 /*
 BannerGet Получение всех баннеров c фильтрацией по фиче и/или тегу
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiBannerGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiBannerGetRequest
 */
 func (a *DefaultApiService) BannerGet(ctx context.Context) ApiBannerGetRequest {
 	return ApiBannerGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return []BannerGet200ResponseInner
+//
+//	@return []BannerGet200ResponseInner
 func (a *DefaultApiService) BannerGetExecute(r ApiBannerGetRequest) ([]BannerGet200ResponseInner, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  []BannerGet200ResponseInner
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []BannerGet200ResponseInner
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.BannerGet")
@@ -176,10 +176,10 @@ func (a *DefaultApiService) BannerGetExecute(r ApiBannerGetRequest) ([]BannerGet
 }
 
 type ApiBannerIdDeleteRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DefaultApiService
-	id int32
-	token *string
+	id         int32
+	token      *string
 }
 
 // Токен админа
@@ -195,24 +195,24 @@ func (r ApiBannerIdDeleteRequest) Execute() (*http.Response, error) {
 /*
 BannerIdDelete Удаление баннера по идентификатору
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param id
- @return ApiBannerIdDeleteRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiBannerIdDeleteRequest
 */
 func (a *DefaultApiService) BannerIdDelete(ctx context.Context, id int32) ApiBannerIdDeleteRequest {
 	return ApiBannerIdDeleteRequest{
 		ApiService: a,
-		ctx: ctx,
-		id: id,
+		ctx:        ctx,
+		id:         id,
 	}
 }
 
 // Execute executes the request
 func (a *DefaultApiService) BannerIdDeleteExecute(r ApiBannerIdDeleteRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodDelete
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.BannerIdDelete")
@@ -295,11 +295,11 @@ func (a *DefaultApiService) BannerIdDeleteExecute(r ApiBannerIdDeleteRequest) (*
 }
 
 type ApiBannerIdPatchRequest struct {
-	ctx context.Context
-	ApiService *DefaultApiService
-	id int32
+	ctx                   context.Context
+	ApiService            *DefaultApiService
+	id                    int32
 	bannerIdDeleteRequest *BannerIdDeleteRequest
-	token *string
+	token                 *string
 }
 
 func (r ApiBannerIdPatchRequest) BannerIdDeleteRequest(bannerIdDeleteRequest BannerIdDeleteRequest) ApiBannerIdPatchRequest {
@@ -320,24 +320,24 @@ func (r ApiBannerIdPatchRequest) Execute() (*http.Response, error) {
 /*
 BannerIdPatch Обновление содержимого баннера
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param id
- @return ApiBannerIdPatchRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApiBannerIdPatchRequest
 */
 func (a *DefaultApiService) BannerIdPatch(ctx context.Context, id int32) ApiBannerIdPatchRequest {
 	return ApiBannerIdPatchRequest{
 		ApiService: a,
-		ctx: ctx,
-		id: id,
+		ctx:        ctx,
+		id:         id,
 	}
 }
 
 // Execute executes the request
 func (a *DefaultApiService) BannerIdPatchExecute(r ApiBannerIdPatchRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPatch
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodPatch
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.BannerIdPatch")
@@ -425,10 +425,10 @@ func (a *DefaultApiService) BannerIdPatchExecute(r ApiBannerIdPatchRequest) (*ht
 }
 
 type ApiBannerPostRequest struct {
-	ctx context.Context
-	ApiService *DefaultApiService
+	ctx              context.Context
+	ApiService       *DefaultApiService
 	bannerGetRequest *BannerGetRequest
-	token *string
+	token            *string
 }
 
 func (r ApiBannerPostRequest) BannerGetRequest(bannerGetRequest BannerGetRequest) ApiBannerPostRequest {
@@ -449,24 +449,25 @@ func (r ApiBannerPostRequest) Execute() (*BannerGet201Response, *http.Response, 
 /*
 BannerPost Создание нового баннера
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiBannerPostRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiBannerPostRequest
 */
 func (a *DefaultApiService) BannerPost(ctx context.Context) ApiBannerPostRequest {
 	return ApiBannerPostRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return BannerGet201Response
+//
+//	@return BannerGet201Response
 func (a *DefaultApiService) BannerPostExecute(r ApiBannerPostRequest) (*BannerGet201Response, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *BannerGet201Response
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BannerGet201Response
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.BannerPost")
@@ -562,12 +563,12 @@ func (a *DefaultApiService) BannerPostExecute(r ApiBannerPostRequest) (*BannerGe
 }
 
 type ApiUserBannerGetRequest struct {
-	ctx context.Context
-	ApiService *DefaultApiService
-	tagId *int32
-	featureId *int32
+	ctx             context.Context
+	ApiService      *DefaultApiService
+	tagId           *int32
+	featureId       *int32
 	useLastRevision *bool
-	token *string
+	token           *string
 }
 
 func (r ApiUserBannerGetRequest) TagId(tagId int32) ApiUserBannerGetRequest {
@@ -598,24 +599,25 @@ func (r ApiUserBannerGetRequest) Execute() (map[string]interface{}, *http.Respon
 /*
 UserBannerGet Получение баннера для пользователя
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiUserBannerGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiUserBannerGetRequest
 */
 func (a *DefaultApiService) UserBannerGet(ctx context.Context) ApiUserBannerGetRequest {
 	return ApiUserBannerGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return map[string]interface{}
+//
+//	@return map[string]interface{}
 func (a *DefaultApiService) UserBannerGetExecute(r ApiUserBannerGetRequest) (map[string]interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  map[string]interface{}
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.UserBannerGet")

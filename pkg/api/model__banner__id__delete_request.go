@@ -108,6 +108,7 @@ func (o *BannerIdDeleteRequest) HasFeatureId() bool {
 func (o *BannerIdDeleteRequest) SetFeatureId(v int32) {
 	o.FeatureId.Set(&v)
 }
+
 // SetFeatureIdNil sets the value for FeatureId to be an explicit nil
 func (o *BannerIdDeleteRequest) SetFeatureIdNil() {
 	o.FeatureId.Set(nil)
@@ -183,6 +184,7 @@ func (o *BannerIdDeleteRequest) HasIsActive() bool {
 func (o *BannerIdDeleteRequest) SetIsActive(v bool) {
 	o.IsActive.Set(&v)
 }
+
 // SetIsActiveNil sets the value for IsActive to be an explicit nil
 func (o *BannerIdDeleteRequest) SetIsActiveNil() {
 	o.IsActive.Set(nil)
@@ -245,5 +247,3 @@ func (v *NullableBannerIdDeleteRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-
