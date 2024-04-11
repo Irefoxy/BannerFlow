@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"time"
 )
 
 type HandlerGetter interface {
@@ -56,13 +55,10 @@ func (g *HTTPServerApp) Run() error {
 }
 
 // Stop stops http server
-func (g *HTTPServerApp) Stop() {
+func (g *HTTPServerApp) Stop(ctx context.Context) {
 	op := "ginapp.stop"
 	log := g.logger.With(op)
 	log.Info("Shutting down server...")
-
-	ctx, cancel := context.WithTimeout(context.Background(), g.httpConfig.Timeout*time.Second)
-	defer cancel()
 
 	if err := g.server.Shutdown(ctx); err != nil {
 		log.Warn(fmt.Errorf("%s %w", op, err).Error())

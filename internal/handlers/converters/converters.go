@@ -7,16 +7,16 @@ import (
 
 func GetRequestToBanner(req openapi.BannerGetRequest) *models.Banner {
 	return &models.Banner{
-		FeatureId: req.GetFeatureId(),
-		TagId:     req.GetTagIds(),
-		IsActive:  req.GetIsActive(),
+		FeatureId: *req.FeatureId,
+		TagId:     *req.TagIds,
+		IsActive:  *req.IsActive,
 		UserBanner: models.UserBanner{
-			Content: req.GetContent(),
+			Content: *req.Content,
 		},
 	}
 }
 
-func ConstructBannerUserOptions(flag bool, feature, tag int32) *models.BannerUserOptions {
+func ConstructBannerUserOptions(flag bool, feature, tag int) *models.BannerUserOptions {
 	return &models.BannerUserOptions{
 		UseLastRevision: flag,
 		BannerIdentOptions: models.BannerIdentOptions{
@@ -26,7 +26,7 @@ func ConstructBannerUserOptions(flag bool, feature, tag int32) *models.BannerUse
 	}
 }
 
-func ConstructBannerListOptions(limit, offset, feature, tag int32) *models.BannerListOptions {
+func ConstructBannerListOptions(limit, offset, feature, tag int) *models.BannerListOptions {
 	return &models.BannerListOptions{
 		BannerIdentOptions: models.BannerIdentOptions{
 			FeatureId: feature,
@@ -42,9 +42,9 @@ func BannersExtToInnerResponses(banners []models.BannerExt) []openapi.BannerGet2
 	for _, banner := range banners {
 		result = append(result, openapi.BannerGet200ResponseInner{
 			BannerId:  &banner.BannerId,
-			TagIds:    banner.TagId,
+			TagIds:    &banner.TagId,
 			FeatureId: &banner.FeatureId,
-			Content:   banner.Content,
+			Content:   &banner.Content,
 			IsActive:  &banner.IsActive,
 			CreatedAt: &banner.CreatedAt,
 			UpdatedAt: &banner.UpdatedAt,
@@ -53,7 +53,7 @@ func BannersExtToInnerResponses(banners []models.BannerExt) []openapi.BannerGet2
 	return result
 }
 
-func ConstructGet201Response(id int32) *openapi.BannerGet201Response {
+func ConstructGet201Response(id int) *openapi.BannerGet201Response {
 	return &openapi.BannerGet201Response{
 		BannerId: &id,
 	}

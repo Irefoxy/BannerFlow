@@ -3,8 +3,8 @@ package models
 import "time"
 
 type BannerIdentOptions struct {
-	FeatureId int32
-	TagId     int32
+	FeatureId int
+	TagId     int
 }
 
 type BannerUserOptions struct {
@@ -14,8 +14,8 @@ type BannerUserOptions struct {
 
 type BannerListOptions struct {
 	BannerIdentOptions
-	Limit  int32
-	Offset int32
+	Limit  int
+	Offset int
 }
 
 type UserBanner struct {
@@ -23,14 +23,14 @@ type UserBanner struct {
 }
 
 type Banner struct {
-	FeatureId int32
-	TagId     []int32
+	FeatureId int
+	TagId     []int
 	IsActive  bool
 	UserBanner
 }
 
 type BannerExt struct {
-	BannerId int32
+	BannerId int
 	Banner
 	UpdatedAt time.Time
 	CreatedAt time.Time
