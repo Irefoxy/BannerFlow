@@ -1,24 +1,13 @@
-INSERT INTO banners (content, is_active, tagIds, featureId)
-VALUES ('"asdv"'::jsonb, true, '{4,5,6}', 3)
+INSERT INTO banners (content, tagIds, featureId)
+VALUES ('"asdv"'::jsonb, '{1,2,3}', 3)
 RETURNING id;
 
 
-UPDATE banners b SET tagids = '{1,2}', featureid = 2 WHERE id = 6;
+UPDATE banners b SET tagids = '{33}', featureid = 1 WHERE id = 3;
 
+SELECT ARRAY_AGG(DISTINCT bannerid) ids FROM feature_tag WHERE tagid = 1
+GROUP BY tagid;
 
-SELECT b.id,
-       b.content,
-       b.is_active,
-       b.created,
-       b.updated,
-       b.featureId,
-       b.tagIds
-FROM feature_tag ft
-         JOIN banners b on b.id = ft.bannerId
-WHERE EXISTS (SELECT 1
-              FROM feature_tag ft2
-              WHERE ft2.bannerId = b.id
-                AND ft2.tagId = 2)
-GROUP BY b.id
-ORDER BY b.id
-LIMIT 3 OFFSET 0;
+CALL choose_banner_from_history(1,3);
+
+DELETE FROM banners WHERE id = ANY ('{3}');

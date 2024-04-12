@@ -30,11 +30,20 @@ type UserBanner struct {
 	Content map[string]any
 }
 
-type Banner struct {
+type BaseBanner struct {
+	UserBanner
 	FeatureId int
 	TagId     []int
-	IsActive  bool
-	UserBanner
+}
+
+type HistoryBanner struct {
+	BaseBanner
+	Version int
+}
+
+type Banner struct {
+	BaseBanner
+	IsActive bool
 }
 
 type UpdateBanner struct {

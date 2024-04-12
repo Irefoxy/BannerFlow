@@ -15,11 +15,13 @@ type Database interface {
 	Add(ctx context.Context, banner *models.Banner) (int, error)
 	Update(ctx context.Context, id int, banner *models.UpdateBanner) error
 	List(ctx context.Context, options *models.BannerListOptions) ([]models.BannerExt, error)
+	DeleteByIds(ctx context.Context, ids ...int) error
+	DeleteByFeatureOrTag(ctx context.Context, options *models.BannerIdentOptions) error
 }
 
 type Cache interface {
 	Get(ctx context.Context, options *models.BannerIdentOptions) (*models.UserBanner, error)
-	Put(ctx context.Context, banner *models.Banner) error
+	Put(ctx context.Context, options *models.BannerIdentOptions, banner *models.UserBanner) error
 }
 
 type Service struct {
@@ -77,8 +79,22 @@ func (s *Service) CreateBanner(ctx context.Context, banner *models.Banner) (int,
 }
 
 func (s *Service) DeleteBanner(ctx context.Context, id int) error {
-	//TODO implement me
-	panic("implement me")
+	const op = "banner.CreateBanner"
+	log := s.logger.With(op)
+	if s.ctxDone(ctx, log) {
+		return e.ErrorInternal
+	}
+	newCtx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+	err := s.db.DeleteByIds(newCtx, id)
+	if err != nil {
+		log.Warn(err.Error())
+		if errors.Is(err, e.ErrorNotFound) {
+			return err
+		}
+		return e.ErrorInternal
+	}
+	return nil
 }
 
 func (s *Service) ListBanners(ctx context.Context, options *models.BannerListOptions) ([]models.BannerExt, error) {
@@ -108,23 +124,24 @@ func (s *Service) UserGetBanners(ctx context.Context, options *models.BannerUser
 	var err error
 	var userBanner *models.UserBanner
 	if !options.UseLastRevision {
-		userBanner, err = s.getBannerFromCache(newCtx, options, log)
+		userBanner, err = s.getBannerFromCache(newCtx, &options.BannerIdentOptions, log)
 	}
 	if options.UseLastRevision || err != nil {
-		banner, err := s.getBannerFromDb(newCtx, options, log)
+		banner, err := s.getBannerFromDb(newCtx, &options.BannerIdentOptions, log)
 		if err != nil {
 			return nil, err
 		}
-		go s.SendBannerToCache(newCtx, banner, log.With(op))
-		userBanner = &banner.UserBanner
+		s.wg.Add(1)
+		go s.SendBannerToCache(newCtx, &options.BannerIdentOptions, banner, log.With(op))
+		userBanner = banner
 	}
 	return userBanner, nil
 }
 
-func (s *Service) getBannerFromDb(newCtx context.Context, options *models.BannerUserOptions, log *slog.Logger) (*models.Banner, error) {
+func (s *Service) getBannerFromDb(newCtx context.Context, options *models.BannerIdentOptions, log *slog.Logger) (*models.UserBanner, error) {
 	const op = "banner.getBannerFromDb"
 	banners, err := s.ListBanners(newCtx, &models.BannerListOptions{
-		BannerIdentOptions: options.BannerIdentOptions,
+		BannerIdentOptions: *options,
 		Limit:              models.ZeroValue,
 		Offset:             models.ZeroValue,
 	})
@@ -135,12 +152,12 @@ func (s *Service) getBannerFromDb(newCtx context.Context, options *models.Banner
 		log.Info(op, "missing banner")
 		return nil, e.ErrorNotFound
 	}
-	return &banners[0].Banner, nil
+	return &banners[0].UserBanner, nil
 }
 
-func (s *Service) getBannerFromCache(newCtx context.Context, options *models.BannerUserOptions, log *slog.Logger) (*models.UserBanner, error) {
+func (s *Service) getBannerFromCache(newCtx context.Context, options *models.BannerIdentOptions, log *slog.Logger) (*models.UserBanner, error) {
 	const op = "banner.getBannerFromCache"
-	banner, err := s.cache.Get(newCtx, &options.BannerIdentOptions)
+	banner, err := s.cache.Get(newCtx, options)
 	if err != nil {
 		log.Warn(op, err.Error())
 		return nil, err
@@ -152,11 +169,10 @@ func (s *Service) getBannerFromCache(newCtx context.Context, options *models.Ban
 	return banner, nil
 }
 
-func (s *Service) SendBannerToCache(newCtx context.Context, banner *models.Banner, log *slog.Logger) {
+func (s *Service) SendBannerToCache(newCtx context.Context, options *models.BannerIdentOptions, banner *models.UserBanner, log *slog.Logger) {
 	const op = "banner.SendBannerToCache"
-	s.wg.Add(1)
 	defer s.wg.Done()
-	err := s.cache.Put(newCtx, banner)
+	err := s.cache.Put(newCtx, options, banner)
 	if err != nil {
 		log.Warn(op, err.Error())
 	}

@@ -9,12 +9,12 @@ CREATE TABLE IF NOT EXISTS banners
 );
 
 CREATE TABLE IF NOT EXISTS deactivated (
-    bannerId  INT PRIMARY KEY REFERENCES banners (id)
+    bannerId  INT PRIMARY KEY REFERENCES banners (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS feature_tag
 (
-    bannerId  INT REFERENCES banners (id),
+    bannerId  INT REFERENCES banners (id) ON DELETE CASCADE,
     tagId     INT,
     featureId INT,
     PRIMARY KEY (tagId, featureId)

@@ -4,7 +4,7 @@ AS $$
 DECLARE
     history banner_history;
 BEGIN
-    history := (SELECT * FROM banner_history WHERE bannerid = bid AND version = vn);
+    SELECT * INTO history FROM banner_history WHERE bannerid = bid AND version = vn;
     IF NOT FOUND THEN
         RAISE EXCEPTION 'No history for ID % and version %.', bid, vn;
     END IF;
@@ -13,5 +13,3 @@ BEGIN
     WHERE id = bid;
 END;
 $$;
-
-CALL choose_banner_from_history(1,1)

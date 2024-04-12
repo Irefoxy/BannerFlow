@@ -5,9 +5,7 @@ import (
 	"BannerFlow/internal/services/models"
 	"context"
 	"errors"
-	"fmt"
 	"github.com/go-redis/cache/v9"
-	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"time"
 )
@@ -17,7 +15,6 @@ type RedisCache struct {
 	ttl        time.Duration
 }
 
-// TODO should be moved
 // NewRedisClient new redis connection
 func NewRedisClient(ctx context.Context, address string) (*redis.Client, error) {
 	client := redis.NewClient(&redis.Options{
@@ -60,44 +57,42 @@ func (r RedisCache) Get(ctx context.Context, options *models.BannerIdentOptions)
 }
 
 func (r RedisCache) handleGet(ctx context.Context, options *models.BannerIdentOptions) (*models.UserBanner, error) {
-	id := ""
-	key := fmt.Sprintf("feature: %d, tag: %d", options.FeatureId, options.TagId)
-	err := r.redisCache.Get(ctx, key, &id)
+	adapter := RedisStorageAdapter{
+		FeatureId: options.FeatureId,
+		TagId:     options.TagId,
+	}
+	err := r.redisCache.Get(ctx, adapter.Key(), &adapter.Bytes)
 	if err != nil {
 		return nil, err
 	}
-	res := models.UserBanner{}
-	err = r.redisCache.Get(ctx, id, &res)
+	content, err := adapter.Content()
 	if err != nil {
 		return nil, err
 	}
-	return &res, nil
+	return &models.UserBanner{Content: content}, nil
 }
 
-func (r RedisCache) Put(ctx context.Context, banner *models.Banner) error {
+func (r RedisCache) Put(ctx context.Context, options *models.BannerIdentOptions, banner *models.UserBanner) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		id := uuid.NewString()
+		adapter := RedisStorageAdapter{
+			UserBanner: banner.Content,
+			FeatureId:  options.FeatureId,
+			TagId:      options.TagId,
+		}
+		value, err := adapter.Value()
+		if err != nil {
+			return err
+		}
 		if err := r.redisCache.Set(&cache.Item{
 			Ctx:   ctx,
-			Key:   id,
-			Value: *banner, // TODO serialize map
+			Key:   adapter.Key(),
+			Value: value,
 			TTL:   r.ttl,
 		}); err != nil {
 			return err
-		}
-		for _, tag := range banner.TagId {
-			key := fmt.Sprintf("feature: %d, tag: %d", banner.FeatureId, tag)
-			if err := r.redisCache.Set(&cache.Item{
-				Ctx:   ctx,
-				Key:   key,
-				Value: id,
-				TTL:   r.ttl,
-			}); err != nil {
-				return err
-			}
 		}
 		return nil
 	}

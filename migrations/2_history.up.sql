@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS banner_history
 (
     id        SERIAL PRIMARY KEY,
-    bannerId  INT REFERENCES banners (id),
+    bannerId  INT REFERENCES banners (id) ON DELETE CASCADE,
     content   JSONB NOT NULL,
     version   INT,
     tagIds    INT[],
