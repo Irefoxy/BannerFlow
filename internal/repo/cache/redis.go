@@ -83,7 +83,7 @@ func (r RedisCache) Put(ctx context.Context, banner *models.Banner) error {
 		if err := r.redisCache.Set(&cache.Item{
 			Ctx:   ctx,
 			Key:   id,
-			Value: *banner,
+			Value: *banner, // TODO serialize map
 			TTL:   r.ttl,
 		}); err != nil {
 			return err

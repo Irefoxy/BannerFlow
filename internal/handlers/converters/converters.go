@@ -5,15 +5,38 @@ import (
 	"BannerFlow/pkg/api"
 )
 
-func GetRequestToBanner(req openapi.BannerGetRequest) *models.Banner {
-	return &models.Banner{
-		FeatureId: *req.FeatureId,
-		TagId:     *req.TagIds,
-		IsActive:  *req.IsActive,
-		UserBanner: models.UserBanner{
-			Content: *req.Content,
-		},
+func GetRequestToUpdateBanner(req openapi.BannerGetRequest) *models.UpdateBanner {
+	flags := 0
+	if req.TagIds != nil {
+		flags |= models.TagBit
 	}
+	if req.FeatureId != nil {
+		flags |= models.FeatureBit
+	}
+	if req.Content != nil {
+		flags |= models.ContentBit
+	}
+	if req.IsActive != nil {
+		flags |= models.IsActiveBit
+	}
+	return &models.UpdateBanner{
+		Banner: models.Banner{
+			FeatureId: getDefaultValue(req.FeatureId),
+			TagId:     getDefaultValue(req.TagIds),
+			IsActive:  getDefaultValue(req.IsActive),
+			UserBanner: models.UserBanner{
+				Content: getDefaultValue(req.Content),
+			},
+		},
+		Flags: flags,
+	}
+}
+
+func getDefaultValue[T any](ptr *T) (result T) {
+	if ptr == nil {
+		return
+	}
+	return *ptr
 }
 
 func ConstructBannerUserOptions(flag bool, feature, tag int) *models.BannerUserOptions {

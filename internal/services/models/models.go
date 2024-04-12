@@ -2,6 +2,14 @@ package models
 
 import "time"
 
+const (
+	FeatureBit  = 1
+	TagBit      = 1 << 1
+	IsActiveBit = 1 << 2
+	ContentBit  = 1 << 3
+	ZeroValue   = -1
+)
+
 type BannerIdentOptions struct {
 	FeatureId int
 	TagId     int
@@ -27,6 +35,11 @@ type Banner struct {
 	TagId     []int
 	IsActive  bool
 	UserBanner
+}
+
+type UpdateBanner struct {
+	Banner
+	Flags int
 }
 
 type BannerExt struct {

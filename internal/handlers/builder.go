@@ -15,7 +15,6 @@ const (
 	lastRevisionFlagName = "use_last_revision"
 	offsetName           = "offset"
 	limitName            = "limit"
-	zeroValue            = -1
 	tokenName            = "token"
 )
 
@@ -25,7 +24,7 @@ type Service interface {
 	DeleteBanner(ctx context.Context, id int) error
 	ListBanners(ctx context.Context, options *models.BannerListOptions) ([]models.BannerExt, error)
 	UserGetBanners(ctx context.Context, options *models.BannerUserOptions) (*models.UserBanner, error)
-	UpdateBanner(ctx context.Context, id int, banner *models.Banner) error
+	UpdateBanner(ctx context.Context, id int, banner *models.UpdateBanner) error
 }
 
 type Authenticator interface {

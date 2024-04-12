@@ -13,7 +13,7 @@ import (
 
 type Database interface {
 	Add(ctx context.Context, banner *models.Banner) (int, error)
-	Update(ctx context.Context, id int, banner *models.Banner) error
+	Update(ctx context.Context, id int, banner *models.UpdateBanner) error
 	List(ctx context.Context, options *models.BannerListOptions) ([]models.BannerExt, error)
 }
 
@@ -125,6 +125,8 @@ func (s *Service) getBannerFromDb(newCtx context.Context, options *models.Banner
 	const op = "banner.getBannerFromDb"
 	banners, err := s.ListBanners(newCtx, &models.BannerListOptions{
 		BannerIdentOptions: options.BannerIdentOptions,
+		Limit:              models.ZeroValue,
+		Offset:             models.ZeroValue,
 	})
 	if err != nil {
 		return nil, err
@@ -160,7 +162,7 @@ func (s *Service) SendBannerToCache(newCtx context.Context, banner *models.Banne
 	}
 }
 
-func (s *Service) UpdateBanner(ctx context.Context, id int, banner *models.Banner) error {
+func (s *Service) UpdateBanner(ctx context.Context, id int, banner *models.UpdateBanner) error {
 	const op = "banner.UpdateBanner"
 	log := s.logger.With(op)
 	if s.ctxDone(ctx, log) {

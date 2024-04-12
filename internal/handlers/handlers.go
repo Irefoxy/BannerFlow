@@ -69,25 +69,25 @@ func (b *HandlerBuilder) updateBanner(c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	return b.srv.UpdateBanner(c.Request.Context(), id, converters.GetRequestToBanner(req))
+	return b.srv.UpdateBanner(c.Request.Context(), id, converters.GetRequestToUpdateBanner(req))
 }
 
 func (b *HandlerBuilder) listBanner(c *gin.Context) ([]models.BannerExt, error) {
 	tag, err := getAndValidateIntParam(c, tagName)
 	if err != nil {
-		tag = zeroValue
+		tag = models.ZeroValue
 	}
 	feature, err := getAndValidateIntParam(c, featureName)
 	if err != nil {
-		feature = zeroValue
+		feature = models.ZeroValue
 	}
 	limit, err := getAndValidateIntParam(c, limitName)
 	if err != nil {
-		limit = zeroValue
+		limit = models.ZeroValue
 	}
 	offset, err := getAndValidateIntParam(c, offsetName)
 	if err != nil {
-		offset = zeroValue
+		offset = models.ZeroValue
 	}
 	return b.srv.ListBanners(c.Request.Context(), converters.ConstructBannerListOptions(limit, offset, tag, feature))
 }
@@ -101,7 +101,7 @@ func (b *HandlerBuilder) createBanner(c *gin.Context) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	return b.srv.CreateBanner(c.Request.Context(), converters.GetRequestToBanner(req))
+	return b.srv.CreateBanner(c.Request.Context(), &converters.GetRequestToUpdateBanner(req).Banner)
 }
 
 func (b *HandlerBuilder) deleteBanner(c *gin.Context) error {
