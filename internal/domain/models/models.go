@@ -3,6 +3,7 @@ package models
 import "time"
 
 const (
+	ZeroBit     = 0
 	FeatureBit  = 1
 	TagBit      = 1 << 1
 	IsActiveBit = 1 << 2

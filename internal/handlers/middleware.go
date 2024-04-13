@@ -31,7 +31,7 @@ func (b *HandlerBuilder) errorMiddleware(c *gin.Context) {
 }
 
 func sendJSONError(c *gin.Context, status int, msg string) {
-	c.JSON(status, openapi.UserBannerGet400Response{
+	c.JSON(status, api.BannerErrorResponse{
 		Error: &msg,
 	})
 }

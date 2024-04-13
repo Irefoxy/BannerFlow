@@ -2,11 +2,11 @@ package converters
 
 import (
 	"BannerFlow/internal/domain/models"
-	openapi "BannerFlow/pkg/api"
+	"BannerFlow/pkg/api"
 )
 
-func GetRequestToUpdateBanner(req openapi.BannerGetRequest) *models.UpdateBanner {
-	flags := 0
+func BannerUpdateRequestToUpdateBanner(req *api.BannerUpdateRequest) *models.UpdateBanner {
+	flags := models.ZeroBit
 	if req.TagIds != nil {
 		flags |= models.TagBit
 	}
@@ -34,6 +34,19 @@ func GetRequestToUpdateBanner(req openapi.BannerGetRequest) *models.UpdateBanner
 	}
 }
 
+func BannerRequestToBanner(req *api.BannerRequest) *models.Banner {
+	return &models.Banner{
+		BaseBanner: models.BaseBanner{
+			FeatureId: *req.FeatureId,
+			TagIds:    *req.TagIds,
+			UserBanner: models.UserBanner{
+				Content: *req.Content,
+			},
+		},
+		IsActive: *req.IsActive,
+	}
+}
+
 func getDefaultValue[T any](ptr *T) (result T) {
 	if ptr == nil {
 		return
@@ -41,31 +54,38 @@ func getDefaultValue[T any](ptr *T) (result T) {
 	return *ptr
 }
 
-func ConstructBannerUserOptions(flag bool, feature, tag int) *models.BannerUserOptions {
+func ConstructBannerUserOptions(params *api.UserBannerParams) *models.BannerUserOptions {
 	return &models.BannerUserOptions{
-		UseLastRevision: flag,
+		UseLastRevision: getDefaultValue(params.UseLastRevision),
 		BannerIdentOptions: models.BannerIdentOptions{
-			FeatureId: feature,
-			TagId:     tag,
+			FeatureId: *params.FeatureId,
+			TagId:     *params.TagId,
 		},
 	}
 }
 
-func ConstructBannerListOptions(limit, offset, feature, tag int) *models.BannerListOptions {
+func ConstructBannerListOptions(params *api.ListBannerParams) *models.BannerListOptions {
 	return &models.BannerListOptions{
 		BannerIdentOptions: models.BannerIdentOptions{
-			FeatureId: feature,
-			TagId:     tag,
+			FeatureId: setZeroValueIfEmpty(params.FeatureId),
+			TagId:     setZeroValueIfEmpty(params.TagId),
 		},
-		Limit:  limit,
-		Offset: offset,
+		Limit:  setZeroValueIfEmpty(params.Limit),
+		Offset: setZeroValueIfEmpty(params.Offset),
 	}
 }
 
-func BannersExtToInnerResponses(banners []models.BannerExt) []openapi.BannerGet200ResponseInner {
-	var result []openapi.BannerGet200ResponseInner
+func setZeroValueIfEmpty(arg *int) int {
+	if arg == nil {
+		return models.ZeroValue
+	}
+	return *arg
+}
+
+func BannersExtToInnerResponses(banners []models.BannerExt) []api.BannerResponse {
+	var result []api.BannerResponse
 	for _, banner := range banners {
-		result = append(result, openapi.BannerGet200ResponseInner{
+		result = append(result, api.BannerResponse{
 			BannerId:  &banner.BannerId,
 			TagIds:    &banner.TagIds,
 			FeatureId: &banner.FeatureId,
@@ -78,16 +98,16 @@ func BannersExtToInnerResponses(banners []models.BannerExt) []openapi.BannerGet2
 	return result
 }
 
-func ConstructGet201Response(id int) *openapi.BannerGet201Response {
-	return &openapi.BannerGet201Response{
+func ConstructGet201Response(id int) *api.BannerIdResponse {
+	return &api.BannerIdResponse{
 		BannerId: &id,
 	}
 }
 
-func HistoryBannersToVersionResponse(banners []models.HistoryBanner) []openapi.VersionResponse {
-	var result []openapi.VersionResponse
+func HistoryBannersToVersionResponse(banners []models.HistoryBanner) []api.BannerVersionResponse {
+	var result []api.BannerVersionResponse
 	for _, banner := range banners {
-		result = append(result, openapi.VersionResponse{
+		result = append(result, api.BannerVersionResponse{
 			Content:   &banner.Content,
 			TagIds:    &banner.TagIds,
 			FeatureId: &banner.FeatureId,
@@ -97,9 +117,9 @@ func HistoryBannersToVersionResponse(banners []models.HistoryBanner) []openapi.V
 	return result
 }
 
-func ConstructIdentOptions(feature, tag int) *models.BannerIdentOptions {
+func ConstructIdentOptions(params *api.DeleteBannerParams) *models.BannerIdentOptions {
 	return &models.BannerIdentOptions{
-		FeatureId: feature,
-		TagId:     tag,
+		FeatureId: setZeroValueIfEmpty(params.FeatureId),
+		TagId:     setZeroValueIfEmpty(params.TagIds),
 	}
 }

@@ -59,10 +59,13 @@ func (b *HandlerBuilder) GetHandler() http.Handler {
 	r.GET("/user_banner", b.handleUserGetBanner)
 
 	postGroup := r.Group("/banner", b.authorize)
-	postGroup.POST("", b.handleCreateBanner)
 	postGroup.GET("", b.handleListBanners)
+	postGroup.POST("", b.handleCreateBanner)
 	postGroup.DELETE("/:id", b.handleDeleteBanner)
 	postGroup.PATCH("/:id", b.handleUpdateBanner)
+	postGroup.GET("/versions/:id", b.handleListBannerHistory)
+	postGroup.PUT("/versions/:id/activate", b.handleSelectBannerVersion)
+	postGroup.DELETE("/banners", b.handleDeleteBanner)
 
 	return r
 }

@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"strconv"
 )
 
 func (b *HandlerBuilder) handleDeleteBannerByTagOrFeature(c *gin.Context) {
@@ -18,21 +17,6 @@ func (b *HandlerBuilder) handleDeleteBannerByTagOrFeature(c *gin.Context) {
 		return
 	}
 	c.Status(http.StatusAccepted)
-}
-
-func (b *HandlerBuilder) DeleteBannerByTagOrFeature(c *gin.Context) error {
-	tag, err := getAndValidateIntParam(c, tagName)
-	if err != nil {
-		tag = models.ZeroValue
-	}
-	feature, err := getAndValidateIntParam(c, featureName)
-	if err != nil {
-		feature = models.ZeroValue
-	}
-	if tag != models.ZeroValue && feature != models.ZeroValue || (tag == models.ZeroValue && feature == models.ZeroValue) {
-		return fmt.Errorf("%w: only one param is required", e.ErrorInParam)
-	}
-	return b.srv.DeleteBannersByTagOrFeature(c.Request.Context(), converters.ConstructIdentOptions(feature, tag))
 }
 
 func (b *HandlerBuilder) handleListBannerHistory(c *gin.Context) {
@@ -98,148 +82,99 @@ func (b *HandlerBuilder) handleDeleteBanner(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
+func (b *HandlerBuilder) DeleteBannerByTagOrFeature(c *gin.Context) error {
+	params := &api.DeleteBannerParams{}
+	err := c.ShouldBindQuery(params)
+	if err != nil {
+		return fmt.Errorf("%w: %w", e.ErrorInParam, err)
+	}
+	return b.srv.DeleteBannersByTagOrFeature(c.Request.Context(), converters.ConstructIdentOptions(params))
+}
+
 func (b *HandlerBuilder) selectBannerVersion(c *gin.Context) error {
-	id, err := getAndValidateIntParam(c, idName)
+	id := &api.IdParams{}
+	err := c.ShouldBindUri(id)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %w", e.ErrorInParam, err)
 	}
-	version, err := getAndValidateIntParam(c, versionName)
+	version := &api.SelectBannersParams{}
+	err = c.ShouldBindQuery(version)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %w", e.ErrorInParam, err)
 	}
-	return b.srv.SelectBannerVersion(c.Request.Context(), id, version)
+	return b.srv.SelectBannerVersion(c.Request.Context(), id.Id, version.Version)
 }
 
 func (b *HandlerBuilder) ListBannerHistory(c *gin.Context) ([]models.HistoryBanner, error) {
-	id, err := getAndValidateIntParam(c, idName)
+	id := &api.IdParams{}
+	err := c.ShouldBindUri(id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %w", e.ErrorInParam, err)
 	}
-	return b.srv.ListBannerHistory(c.Request.Context(), id)
+	return b.srv.ListBannerHistory(c.Request.Context(), id.Id)
 }
 
 func (b *HandlerBuilder) updateBanner(c *gin.Context) error {
-	id, err := getAndValidateIntParam(c, idName)
+	id := &api.IdParams{}
+	err := c.ShouldBindUri(id)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %w", e.ErrorInParam, err)
 	}
-	req, err := readRequest[openapi.BannerGetRequest](c)
+	req, err := readRequest[api.BannerUpdateRequest](c)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %w", e.ErrorInRequestBody, err)
 	}
-	err = validateUpdateBannerRequest(req)
-	if err != nil {
-		return err
+	updateBanner := converters.BannerUpdateRequestToUpdateBanner(req)
+	if updateBanner.Flags == models.ZeroBit {
+		return fmt.Errorf("%w: all fields are empty", e.ErrorInRequestBody)
 	}
-	return b.srv.UpdateBanner(c.Request.Context(), id, converters.GetRequestToUpdateBanner(req))
+	return b.srv.UpdateBanner(c.Request.Context(), id.Id, updateBanner)
 }
 
 func (b *HandlerBuilder) listBanner(c *gin.Context) ([]models.BannerExt, error) {
-	tag, err := getAndValidateIntParam(c, tagName)
+	params := &api.ListBannerParams{}
+	err := c.ShouldBindQuery(params)
 	if err != nil {
-		tag = models.ZeroValue
+		return nil, fmt.Errorf("%w: %w", e.ErrorInParam, err)
 	}
-	feature, err := getAndValidateIntParam(c, featureName)
-	if err != nil {
-		feature = models.ZeroValue
-	}
-	limit, err := getAndValidateIntParam(c, limitName)
-	if err != nil {
-		limit = models.ZeroValue
-	}
-	offset, err := getAndValidateIntParam(c, offsetName)
-	if err != nil {
-		offset = models.ZeroValue
-	}
-	return b.srv.ListBanners(c.Request.Context(), converters.ConstructBannerListOptions(limit, offset, tag, feature))
+	return b.srv.ListBanners(c.Request.Context(), converters.ConstructBannerListOptions(params))
 }
 
 func (b *HandlerBuilder) createBanner(c *gin.Context) (int, error) {
-	req, err := readRequest[openapi.BannerGetRequest](c)
+	req, err := readRequest[api.BannerRequest](c)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("%w: %w", e.ErrorInRequestBody, err)
 	}
-	err = validateCreateBannerRequest(req)
-	if err != nil {
-		return 0, err
-	}
-	return b.srv.CreateBanner(c.Request.Context(), &converters.GetRequestToUpdateBanner(req).Banner)
+	return b.srv.CreateBanner(c.Request.Context(), converters.BannerRequestToBanner(req))
 }
 
 func (b *HandlerBuilder) deleteBanner(c *gin.Context) error {
-	id, err := getAndValidateIntParam(c, idName)
+	id := &api.IdParams{}
+	err := c.ShouldBindUri(id)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %w", e.ErrorInParam, err)
 	}
-	return b.srv.DeleteBanner(c.Request.Context(), id)
+	return b.srv.DeleteBanner(c.Request.Context(), id.Id)
 }
 
 func (b *HandlerBuilder) userGetBanner(c *gin.Context) (*models.UserBanner, error) {
-	tag, err := getAndValidateIntParam(c, tagName)
+	params := &api.UserBannerParams{}
+	err := c.ShouldBindQuery(params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %w", e.ErrorInParam, err)
 	}
-	feature, err := getAndValidateIntParam(c, featureName)
-	if err != nil {
-		return nil, err
-	}
-	flag, _ := getAndValidateBoolParam(c, lastRevisionFlagName)
-	return b.srv.UserGetBanners(c.Request.Context(), converters.ConstructBannerUserOptions(flag, feature, tag))
+	return b.srv.UserGetBanners(c.Request.Context(), converters.ConstructBannerUserOptions(params))
 }
 
-func getAndValidateIntParam(c *gin.Context, key string) (int, error) {
-	id, ok := c.Params.Get(key)
-	if !ok {
-		return 0, fmt.Errorf("%w: %s is required", e.ErrorInParam, key)
-	}
-	iid, err := strconv.Atoi(id)
-	if err != nil {
-		return 0, fmt.Errorf("%w: %s should be an int integer", e.ErrorInParam, key)
-	}
-	return iid, nil
-}
-
-func getAndValidateBoolParam(c *gin.Context, key string) (bool, error) {
-	id, ok := c.Params.Get(key)
-	if !ok {
-		return false, fmt.Errorf("%w: %s is required", e.ErrorInParam, key)
-	}
-	flag, err := strconv.ParseBool(id)
-	if err != nil {
-		return false, fmt.Errorf("%w: %s should be a bool value", e.ErrorInParam, key)
-	}
-	return flag, nil
-}
-
-func readRequest[T any](c *gin.Context) (T, error) {
+func readRequest[T any](c *gin.Context) (*T, error) {
 	var request T
 	if err := c.ShouldBind(&request); err != nil {
-		return request, fmt.Errorf("%w: %w", e.ErrorInRequestBody, err)
+		return nil, fmt.Errorf("%w: %w", e.ErrorInRequestBody, err)
 	}
-	return request, nil
+	return &request, nil
 }
 
 func collectErrors(c *gin.Context, err error) {
 	c.Error(err)
 	c.Abort()
-}
-
-func validateCreateBannerRequest(req openapi.BannerGetRequest) error {
-	switch {
-	case req.TagIds == nil:
-		return fmt.Errorf("%w: missing tag ids", e.ErrorInRequestBody)
-	case req.FeatureId == nil:
-		return fmt.Errorf("%w: missing feature ids", e.ErrorInRequestBody)
-	case req.Content == nil:
-		return fmt.Errorf("%w: missing content", e.ErrorInRequestBody)
-	case req.IsActive == nil:
-		return fmt.Errorf("%w: missing is_active", e.ErrorInRequestBody)
-	}
-	return nil
-}
-func validateUpdateBannerRequest(req openapi.BannerGetRequest) error {
-	if req.TagIds == nil && req.FeatureId == nil && req.Content == nil && req.IsActive == nil {
-		return fmt.Errorf("%w: all fields are empty", e.ErrorInRequestBody)
-	}
-	return nil
 }
