@@ -4,6 +4,7 @@ import (
 	"BannerFlow/internal/config"
 	e "BannerFlow/internal/domain/errors"
 	"BannerFlow/internal/domain/models"
+	"BannerFlow/internal/utils"
 	"context"
 	"errors"
 	"fmt"
@@ -48,7 +49,7 @@ func New(db Database, cache Cache, logger *slog.Logger, cfg *config.ServiceConfi
 	}
 }
 
-func (s *Service) Start() {
+func (s *Service) MustRun() {
 	for ident := range s.tasksChan {
 		for {
 			if atomic.LoadInt64(&s.activeRequests) < 200 {
@@ -66,9 +67,10 @@ func (s *Service) Start() {
 	}
 }
 
-func (s *Service) Stop(ctx context.Context) error {
+func (s *Service) Stop(ctx context.Context) {
 	const op = "banner.Stop"
-	s.logger.Info(op, "stopping banner service")
+	log := s.logger.With(utils.Text(op))
+	log.Info("stopping banner service")
 	done := make(chan struct{})
 	go func() {
 		s.wg.Wait()
@@ -76,11 +78,11 @@ func (s *Service) Stop(ctx context.Context) error {
 	}()
 	select {
 	case <-ctx.Done():
-		s.logger.Info(op, "failed to stop service", ctx.Err().Error())
-		return ctx.Err()
+		log.Warn("failed to stop service", utils.Err(ctx.Err()))
+		return
 	case <-done:
-		s.logger.Info(op, "service stopped")
-		return nil
+		log.Info("service stopped")
+		return
 	}
 }
 

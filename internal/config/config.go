@@ -10,12 +10,13 @@ import (
 )
 
 type Config struct {
-	Env          string          `yaml:"env" env-default:"local"`
-	GinCfg       *HTTPConfig     `yaml:"server"`
-	PostgresCfg  *PostgresConfig `yaml:"postgres"`
-	RedisCfg     *RedisConfig    `yaml:"redis"`
-	ServiceCfg   *ServiceConfig  `yaml:"service"`
-	StartTimeout time.Duration   `yaml:"start_stop_timeout" env-default:"5s"`
+	Env         string          `yaml:"env" env-default:"local"`
+	GinCfg      *HTTPConfig     `yaml:"server"`
+	PostgresCfg *PostgresConfig `yaml:"postgres" env-required:"true"`
+	RedisCfg    *RedisConfig    `yaml:"redis" env-required:"true"`
+	CacheCfg    *CacheConfig    `yaml:"cache" env-required:"true"`
+	ServiceCfg  *ServiceConfig  `yaml:"service"`
+	InitTimeout time.Duration   `yaml:"init_timeout" env-default:"5s"`
 }
 
 type ServiceConfig struct {
@@ -33,8 +34,8 @@ type CacheConfig struct {
 }
 
 type RedisConfig struct {
-	Address string       `yaml:"address" env-required:"true"`
-	Cache   *CacheConfig `yaml:"cache"`
+	Address  string `yaml:"address" env-required:"true"`
+	Password string `yaml:"password" env-required:"true"`
 }
 
 type HTTPConfig struct {

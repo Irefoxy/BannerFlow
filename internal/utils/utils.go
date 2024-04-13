@@ -1,0 +1,17 @@
+package utils
+
+import "log/slog"
+
+func Err(err error) slog.Attr {
+	return slog.Attr{
+		Key:   "error",
+		Value: slog.StringValue(err.Error()),
+	}
+}
+
+func Text(str string) slog.Attr {
+	return slog.Attr{
+		Key:   "fn",
+		Value: slog.StringValue(str),
+	}
+}

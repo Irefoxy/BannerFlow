@@ -18,6 +18,16 @@ type HTTPServer interface {
 	Stop(ctx context.Context)
 }
 
+type RunnableService interface {
+	handlers.Service
+	MustRun()
+}
+
+type StoppableService interface {
+	handlers.Service
+	Stop(ctx context.Context)
+}
+
 type Provider struct {
 	logger        *slog.Logger
 	cfg           *config.Config
@@ -30,18 +40,9 @@ type Provider struct {
 	db            banner.Database
 }
 
-func NewProvider(logger *slog.Logger, cfg *config.Config, redis *redis.Client, postgres *pgxpool.Pool) *Provider {
-	return &Provider{
-		logger:   logger,
-		cfg:      cfg,
-		redis:    redis,
-		postgres: postgres,
-	}
-}
-
 func (p *Provider) Server() HTTPServer {
 	if p.server == nil {
-		p.server = ginapp.NewHTTPServerApp(p.logger, p.cfg.GinCfg, p.handlerGetter)
+		p.server = ginapp.NewHTTPServerApp(p.logger, p.cfg.GinCfg, p.HandlerGetter())
 	}
 	return p.server
 }
@@ -63,7 +64,7 @@ func (p *Provider) Service() handlers.Service {
 
 func (p *Provider) Cache() banner.Cache {
 	if p.cache == nil {
-		p.cache = cache.New(p.redis, p.cfg.RedisCfg.Cache)
+		p.cache = cache.New(p.redis, p.cfg.CacheCfg)
 	}
 	return p.cache
 }

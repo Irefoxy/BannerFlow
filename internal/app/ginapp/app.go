@@ -2,9 +2,9 @@ package ginapp
 
 import (
 	"BannerFlow/internal/config"
+	"BannerFlow/internal/utils"
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 )
@@ -39,17 +39,16 @@ func (g *HTTPServerApp) MustRun() {
 // Run runs http server
 func (g *HTTPServerApp) Run() error {
 	const op = "ginapp.run"
-	log := g.logger.With(op)
-
+	log := g.logger.With(utils.Text(op))
 	r := g.handlerGetter.GetHandler()
-	srv := &http.Server{
+	g.server = &http.Server{
 		Addr:    g.httpConfig.Address,
 		Handler: r,
 	}
 
 	log.Info("Starting server...", "address", g.httpConfig.Address)
-	if err := srv.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-		log.Warn(fmt.Errorf("%s %w", op, err).Error())
+	if err := g.server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+		log.Warn("ListenAndServe failed", utils.Err(err))
 	}
 	return nil
 }
@@ -57,10 +56,13 @@ func (g *HTTPServerApp) Run() error {
 // Stop stops http server
 func (g *HTTPServerApp) Stop(ctx context.Context) {
 	op := "ginapp.stop"
-	log := g.logger.With(op)
+	log := g.logger.With(utils.Text(op))
 	log.Info("Shutting down server...")
-
+	if g.server == nil {
+		log.Info("nothing to shutdown")
+		return
+	}
 	if err := g.server.Shutdown(ctx); err != nil {
-		log.Warn(fmt.Errorf("%s %w", op, err).Error())
+		log.Warn("shutdown failed", utils.Err(err))
 	}
 }

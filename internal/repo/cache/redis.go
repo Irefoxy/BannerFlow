@@ -16,9 +16,10 @@ type RedisCache struct {
 }
 
 // NewRedisClient new redis connection
-func NewRedisClient(ctx context.Context, address string) (*redis.Client, error) {
+func NewRedisClient(ctx context.Context, cfg *config.RedisConfig) (*redis.Client, error) {
 	client := redis.NewClient(&redis.Options{
-		Addr: address,
+		Addr:     cfg.Address,
+		Password: cfg.Password,
 	})
 	err := client.Ping(ctx).Err()
 	if err != nil {
@@ -27,7 +28,6 @@ func NewRedisClient(ctx context.Context, address string) (*redis.Client, error) 
 	return client, nil
 }
 
-// TODO switch client to iface for testing
 func New(rdb *redis.Client, cfg *config.CacheConfig) *RedisCache {
 	redisCache := cache.New(&cache.Options{
 		Redis:      rdb,
