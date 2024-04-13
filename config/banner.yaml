@@ -1,9 +1,0 @@
-env: "local"
-server:
-  address: "localhost:8888"
-  timeout: 5h
-repo:
-  postgres:
-    dsn: "postgres:localhost"
-    timeout: 5h
-  redis: ""

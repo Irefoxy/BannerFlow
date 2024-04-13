@@ -1,0 +1,15 @@
+env: "local"
+server:
+  address: "localhost:8888"
+postgres:
+  dsn: "postgres://banner:postgres1234@localhost:9111/banners?sslmode=disable"
+  timeout: 5s
+redis:
+  address: "localhost:9112"
+  password: "redis1234"
+cache:
+  local_size: 1000
+  ttl: 5m
+service:
+  timeout: 50ms
+init_timeout: 15s

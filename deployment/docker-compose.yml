@@ -1,0 +1,43 @@
+version: '3.7'
+
+services:
+  redis:
+    image: redis:alpine
+    ports:
+      - "9112:6379"
+    entrypoint: /bin/sh -c 'redis-server --requirepass $(cat /run/secrets/redis_password)'
+    volumes:
+      - redis_data:/var/lib/redis/data
+    secrets:
+      - redis_password
+
+  postgres:
+    image: postgres:alpine
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_USER: banner
+      POSTGRES_DB: banners
+    ports:
+      - "9111:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    secrets:
+      - postgres_password
+
+  migrations:
+    image: migrate/migrate:latest
+    command: ["-path=/migrations/", "-database=postgres://banner:postgres1234@postgres:5432/banners?sslmode=disable", "up"]
+    volumes:
+      - ../migrations:/migrations
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+  redis_data:
+
+secrets:
+  postgres_password:
+    file: ../config/postgres_password
+  redis_password:
+    file: ../config/redis_password
