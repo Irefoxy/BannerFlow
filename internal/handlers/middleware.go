@@ -44,11 +44,12 @@ func (b *HandlerBuilder) authenticate(c *gin.Context) {
 }
 
 func (b *HandlerBuilder) handleAuthentication(c *gin.Context) error {
-	token := c.GetHeader(tokenName)
-	if token == "" {
+	token := &api.TokenParam{}
+	err := c.ShouldBindHeader(&token)
+	if err != nil {
 		return e.ErrorNoToken
 	}
-	return b.authenticator.Authenticate(token)
+	return b.authenticator.Authenticate(token.Token)
 }
 
 func (b *HandlerBuilder) authorize(c *gin.Context) {
