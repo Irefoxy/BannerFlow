@@ -2,14 +2,56 @@ package handlers
 
 import (
 	e "BannerFlow/internal/domain/errors"
+	"BannerFlow/internal/domain/models"
 	"BannerFlow/internal/handlers/converters"
-	"BannerFlow/internal/services/models"
 	"BannerFlow/pkg/api"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
 )
+
+func (b *HandlerBuilder) handleDeleteBannerByTagOrFeature(c *gin.Context) {
+	err := b.DeleteBannerByTagOrFeature(c)
+	if err != nil {
+		collectErrors(c, err)
+		return
+	}
+	c.Status(http.StatusAccepted)
+}
+
+func (b *HandlerBuilder) DeleteBannerByTagOrFeature(c *gin.Context) error {
+	tag, err := getAndValidateIntParam(c, tagName)
+	if err != nil {
+		tag = models.ZeroValue
+	}
+	feature, err := getAndValidateIntParam(c, featureName)
+	if err != nil {
+		feature = models.ZeroValue
+	}
+	if tag != models.ZeroValue && feature != models.ZeroValue || (tag == models.ZeroValue && feature == models.ZeroValue) {
+		return fmt.Errorf("%w: only one param is required", e.ErrorInParam)
+	}
+	return b.srv.DeleteBannersByTagOrFeature(c.Request.Context(), converters.ConstructIdentOptions(feature, tag))
+}
+
+func (b *HandlerBuilder) handleListBannerHistory(c *gin.Context) {
+	banners, err := b.ListBannerHistory(c)
+	if err != nil {
+		collectErrors(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, converters.HistoryBannersToVersionResponse(banners))
+}
+
+func (b *HandlerBuilder) handleSelectBannerVersion(c *gin.Context) {
+	err := b.selectBannerVersion(c)
+	if err != nil {
+		collectErrors(c, err)
+		return
+	}
+	c.Status(http.StatusOK)
+}
 
 func (b *HandlerBuilder) handleListBanners(c *gin.Context) {
 	banners, err := b.listBanner(c)
@@ -54,6 +96,26 @@ func (b *HandlerBuilder) handleDeleteBanner(c *gin.Context) {
 		return
 	}
 	c.Status(http.StatusNoContent)
+}
+
+func (b *HandlerBuilder) selectBannerVersion(c *gin.Context) error {
+	id, err := getAndValidateIntParam(c, idName)
+	if err != nil {
+		return err
+	}
+	version, err := getAndValidateIntParam(c, versionName)
+	if err != nil {
+		return err
+	}
+	return b.srv.SelectBannerVersion(c.Request.Context(), id, version)
+}
+
+func (b *HandlerBuilder) ListBannerHistory(c *gin.Context) ([]models.HistoryBanner, error) {
+	id, err := getAndValidateIntParam(c, idName)
+	if err != nil {
+		return nil, err
+	}
+	return b.srv.ListBannerHistory(c.Request.Context(), id)
 }
 
 func (b *HandlerBuilder) updateBanner(c *gin.Context) error {
@@ -130,11 +192,11 @@ func getAndValidateIntParam(c *gin.Context, key string) (int, error) {
 	if !ok {
 		return 0, fmt.Errorf("%w: %s is required", e.ErrorInParam, key)
 	}
-	iid, err := strconv.ParseInt(id, 10, 32)
+	iid, err := strconv.Atoi(id)
 	if err != nil {
 		return 0, fmt.Errorf("%w: %s should be an int integer", e.ErrorInParam, key)
 	}
-	return int(iid), nil
+	return iid, nil
 }
 
 func getAndValidateBoolParam(c *gin.Context, key string) (bool, error) {

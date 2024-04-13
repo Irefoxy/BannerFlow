@@ -3,11 +3,13 @@ package banner
 import (
 	"BannerFlow/internal/config"
 	e "BannerFlow/internal/domain/errors"
-	"BannerFlow/internal/services/models"
+	"BannerFlow/internal/domain/models"
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -17,6 +19,8 @@ type Database interface {
 	List(ctx context.Context, options *models.BannerListOptions) ([]models.BannerExt, error)
 	DeleteByIds(ctx context.Context, ids ...int) error
 	DeleteByFeatureOrTag(ctx context.Context, options *models.BannerIdentOptions) error
+	GetHistoryForId(ctx context.Context, id int) ([]models.HistoryBanner, error)
+	SelectBannerVersion(ctx context.Context, id, version int) error
 }
 
 type Cache interface {
@@ -25,19 +29,40 @@ type Cache interface {
 }
 
 type Service struct {
-	wg      sync.WaitGroup
-	timeout time.Duration
-	logger  *slog.Logger
-	db      Database
-	cache   Cache
+	wg             sync.WaitGroup
+	timeout        time.Duration
+	logger         *slog.Logger
+	db             Database
+	cache          Cache
+	tasksChan      chan *models.BannerIdentOptions
+	activeRequests int64
 }
 
 func New(db Database, cache Cache, logger *slog.Logger, cfg *config.ServiceConfig) *Service {
 	return &Service{
-		timeout: cfg.Timeout,
-		logger:  logger,
-		db:      db,
-		cache:   cache,
+		timeout:   cfg.Timeout,
+		logger:    logger,
+		db:        db,
+		cache:     cache,
+		tasksChan: make(chan *models.BannerIdentOptions, 100),
+	}
+}
+
+func (s *Service) Start() {
+	for ident := range s.tasksChan {
+		for {
+			if atomic.LoadInt64(&s.activeRequests) < 200 {
+				break
+			}
+			time.Sleep(2 * time.Second)
+		}
+		const op = "long deletion"
+		newCtx, cancel := context.WithTimeout(context.Background(), s.timeout)
+		err := s.db.DeleteByFeatureOrTag(newCtx, ident)
+		if err != nil {
+			s.logger.Warn(op, fmt.Sprintf("Failed to delete: tag: %d feature: %d", ident.TagId, ident.FeatureId), err.Error())
+		}
+		cancel()
 	}
 }
 
@@ -60,6 +85,8 @@ func (s *Service) Stop(ctx context.Context) error {
 }
 
 func (s *Service) CreateBanner(ctx context.Context, banner *models.Banner) (int, error) {
+	atomic.AddInt64(&s.activeRequests, 1)
+	defer atomic.AddInt64(&s.activeRequests, -1)
 	const op = "banner.CreateBanner"
 	log := s.logger.With(op)
 	if s.ctxDone(ctx, log) {
@@ -78,7 +105,49 @@ func (s *Service) CreateBanner(ctx context.Context, banner *models.Banner) (int,
 	return id, nil
 }
 
+func (s *Service) ListBannerHistory(ctx context.Context, id int) ([]models.HistoryBanner, error) {
+	atomic.AddInt64(&s.activeRequests, 1)
+	defer atomic.AddInt64(&s.activeRequests, -1)
+	const op = "banner.ListBannerHistory"
+	log := s.logger.With(op)
+	if s.ctxDone(ctx, log) {
+		return nil, e.ErrorInternal
+	}
+	newCtx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+	banners, err := s.db.GetHistoryForId(newCtx, id)
+	if err != nil {
+		log.Warn(err.Error())
+		return nil, e.ErrorInternal
+	}
+	if len(banners) == 0 {
+		log.Info("no banner found")
+		return nil, e.ErrorNotFound
+	}
+	return banners, nil
+}
+
+func (s *Service) SelectBannerVersion(ctx context.Context, id, version int) error {
+	atomic.AddInt64(&s.activeRequests, 1)
+	defer atomic.AddInt64(&s.activeRequests, -1)
+	const op = "banner.ListBannerHistory"
+	log := s.logger.With(op)
+	if s.ctxDone(ctx, log) {
+		return e.ErrorInternal
+	}
+	newCtx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+	err := s.db.SelectBannerVersion(newCtx, id, version)
+	if err != nil {
+		log.Warn(err.Error())
+		return e.ErrorInternal
+	}
+	return nil
+}
+
 func (s *Service) DeleteBanner(ctx context.Context, id int) error {
+	atomic.AddInt64(&s.activeRequests, 1)
+	defer atomic.AddInt64(&s.activeRequests, -1)
 	const op = "banner.CreateBanner"
 	log := s.logger.With(op)
 	if s.ctxDone(ctx, log) {
@@ -97,7 +166,22 @@ func (s *Service) DeleteBanner(ctx context.Context, id int) error {
 	return nil
 }
 
+func (s *Service) DeleteBannersByTagOrFeature(ctx context.Context, options *models.BannerIdentOptions) error {
+	atomic.AddInt64(&s.activeRequests, 1)
+	defer atomic.AddInt64(&s.activeRequests, -1)
+	const op = "banner.CreateBanner"
+	log := s.logger.With(op)
+	if s.ctxDone(ctx, log) {
+		return e.ErrorInternal
+	}
+	s.wg.Add(1)
+	s.tasksChan <- options
+	return nil
+}
+
 func (s *Service) ListBanners(ctx context.Context, options *models.BannerListOptions) ([]models.BannerExt, error) {
+	atomic.AddInt64(&s.activeRequests, 1)
+	defer atomic.AddInt64(&s.activeRequests, -1)
 	const op = "banner.ListBanner"
 	log := s.logger.With(op)
 	if s.ctxDone(ctx, log) {
@@ -114,6 +198,8 @@ func (s *Service) ListBanners(ctx context.Context, options *models.BannerListOpt
 }
 
 func (s *Service) UserGetBanners(ctx context.Context, options *models.BannerUserOptions) (*models.UserBanner, error) {
+	atomic.AddInt64(&s.activeRequests, 1)
+	defer atomic.AddInt64(&s.activeRequests, -1)
 	const op = "banner.UserGetBanner"
 	log := s.logger.With(op)
 	if s.ctxDone(ctx, log) {
@@ -136,6 +222,27 @@ func (s *Service) UserGetBanners(ctx context.Context, options *models.BannerUser
 		userBanner = banner
 	}
 	return userBanner, nil
+}
+
+func (s *Service) UpdateBanner(ctx context.Context, id int, banner *models.UpdateBanner) error {
+	atomic.AddInt64(&s.activeRequests, 1)
+	defer atomic.AddInt64(&s.activeRequests, -1)
+	const op = "banner.UpdateBanner"
+	log := s.logger.With(op)
+	if s.ctxDone(ctx, log) {
+		return e.ErrorInternal
+	}
+	newCtx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+	err := s.db.Update(newCtx, id, banner)
+	if err != nil {
+		log.Warn(op, err.Error())
+		if errors.Is(err, e.ErrorNotFound) {
+			return err
+		}
+		return e.ErrorInternal
+	}
+	return nil
 }
 
 func (s *Service) getBannerFromDb(newCtx context.Context, options *models.BannerIdentOptions, log *slog.Logger) (*models.UserBanner, error) {
@@ -176,25 +283,6 @@ func (s *Service) SendBannerToCache(newCtx context.Context, options *models.Bann
 	if err != nil {
 		log.Warn(op, err.Error())
 	}
-}
-
-func (s *Service) UpdateBanner(ctx context.Context, id int, banner *models.UpdateBanner) error {
-	const op = "banner.UpdateBanner"
-	log := s.logger.With(op)
-	if s.ctxDone(ctx, log) {
-		return e.ErrorInternal
-	}
-	newCtx, cancel := context.WithTimeout(ctx, s.timeout)
-	defer cancel()
-	err := s.db.Update(newCtx, id, banner)
-	if err != nil {
-		log.Warn(op, err.Error())
-		if errors.Is(err, e.ErrorNotFound) {
-			return err
-		}
-		return e.ErrorInternal
-	}
-	return nil
 }
 
 func (s *Service) ctxDone(ctx context.Context, log *slog.Logger) bool {

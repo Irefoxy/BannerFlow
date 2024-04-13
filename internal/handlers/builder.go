@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"BannerFlow/internal/services/models"
+	"BannerFlow/internal/domain/models"
 	"context"
 	"github.com/gin-gonic/gin"
 	"log/slog"
@@ -16,6 +16,7 @@ const (
 	offsetName           = "offset"
 	limitName            = "limit"
 	tokenName            = "token"
+	versionName          = "version"
 )
 
 //go:generate mockgen -source=gin_api.go -package=mocks -destination=./mocks/mock_gin_api.go
@@ -25,6 +26,9 @@ type Service interface {
 	ListBanners(ctx context.Context, options *models.BannerListOptions) ([]models.BannerExt, error)
 	UserGetBanners(ctx context.Context, options *models.BannerUserOptions) (*models.UserBanner, error)
 	UpdateBanner(ctx context.Context, id int, banner *models.UpdateBanner) error
+	ListBannerHistory(ctx context.Context, id int) ([]models.HistoryBanner, error)
+	SelectBannerVersion(ctx context.Context, id, version int) error
+	DeleteBannersByTagOrFeature(ctx context.Context, options *models.BannerIdentOptions) error
 }
 
 type Authenticator interface {

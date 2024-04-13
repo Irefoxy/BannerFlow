@@ -2,7 +2,7 @@ package db
 
 import (
 	e "BannerFlow/internal/domain/errors"
-	"BannerFlow/internal/services/models"
+	"BannerFlow/internal/domain/models"
 	"context"
 	"errors"
 	"github.com/jackc/pgx/v5"
@@ -64,7 +64,7 @@ func (p PostgresDatabase) Add(ctx context.Context, banner *models.Banner) (int, 
 	}
 	defer tx.Rollback(ctx)
 	var id int
-	err = tx.QueryRow(ctx, insertBannerQuery, Attrs(banner.Content), banner.TagId, banner.FeatureId).Scan(&id)
+	err = tx.QueryRow(ctx, insertBannerQuery, Attrs(banner.Content), banner.TagIds, banner.FeatureId).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
@@ -90,7 +90,7 @@ func (p PostgresDatabase) GetHistoryForId(ctx context.Context, id int) ([]models
 	historyBanners, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (models.HistoryBanner, error) {
 		res := models.HistoryBanner{}
 		var attr Attrs
-		err := row.Scan(&res.Version, &res.FeatureId, &res.TagId, attr)
+		err := row.Scan(&res.Version, &res.FeatureId, &res.TagIds, attr)
 		res.Content = attr
 		return res, err
 	})
@@ -150,7 +150,7 @@ func (p PostgresDatabase) List(ctx context.Context, options *models.BannerListOp
 	banners, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (models.BannerExt, error) {
 		res := models.BannerExt{}
 		var attr Attrs
-		err := row.Scan(&res.BannerId, &attr, &res.CreatedAt, &res.UpdatedAt, &res.FeatureId, &res.TagId, &res.IsActive)
+		err := row.Scan(&res.BannerId, &attr, &res.CreatedAt, &res.UpdatedAt, &res.FeatureId, &res.TagIds, &res.IsActive)
 		res.Content = attr
 		return res, err
 	})
@@ -212,7 +212,7 @@ func buildUpdateQuery(banner *models.UpdateBanner) (string, []any) {
 	}
 	addComma()
 	if banner.Flags & ^models.TagBit > 0 {
-		_, args = builder(" tagIds=$", banner.TagId)
+		_, args = builder(" tagIds=$", banner.TagIds)
 	}
 	addComma()
 	if banner.Flags & ^models.ContentBit > 0 {

@@ -1,8 +1,8 @@
 package converters
 
 import (
-	"BannerFlow/internal/services/models"
-	"BannerFlow/pkg/api"
+	"BannerFlow/internal/domain/models"
+	openapi "BannerFlow/pkg/api"
 )
 
 func GetRequestToUpdateBanner(req openapi.BannerGetRequest) *models.UpdateBanner {
@@ -21,12 +21,14 @@ func GetRequestToUpdateBanner(req openapi.BannerGetRequest) *models.UpdateBanner
 	}
 	return &models.UpdateBanner{
 		Banner: models.Banner{
-			FeatureId: getDefaultValue(req.FeatureId),
-			TagId:     getDefaultValue(req.TagIds),
-			IsActive:  getDefaultValue(req.IsActive),
-			UserBanner: models.UserBanner{
-				Content: getDefaultValue(req.Content),
+			BaseBanner: models.BaseBanner{
+				FeatureId: getDefaultValue(req.FeatureId),
+				TagIds:    getDefaultValue(req.TagIds),
+				UserBanner: models.UserBanner{
+					Content: getDefaultValue(req.Content),
+				},
 			},
+			IsActive: getDefaultValue(req.IsActive),
 		},
 		Flags: flags,
 	}
@@ -65,7 +67,7 @@ func BannersExtToInnerResponses(banners []models.BannerExt) []openapi.BannerGet2
 	for _, banner := range banners {
 		result = append(result, openapi.BannerGet200ResponseInner{
 			BannerId:  &banner.BannerId,
-			TagIds:    &banner.TagId,
+			TagIds:    &banner.TagIds,
 			FeatureId: &banner.FeatureId,
 			Content:   &banner.Content,
 			IsActive:  &banner.IsActive,
@@ -79,5 +81,25 @@ func BannersExtToInnerResponses(banners []models.BannerExt) []openapi.BannerGet2
 func ConstructGet201Response(id int) *openapi.BannerGet201Response {
 	return &openapi.BannerGet201Response{
 		BannerId: &id,
+	}
+}
+
+func HistoryBannersToVersionResponse(banners []models.HistoryBanner) []openapi.VersionResponse {
+	var result []openapi.VersionResponse
+	for _, banner := range banners {
+		result = append(result, openapi.VersionResponse{
+			Content:   &banner.Content,
+			TagIds:    &banner.TagIds,
+			FeatureId: &banner.FeatureId,
+			Version:   &banner.Version,
+		})
+	}
+	return result
+}
+
+func ConstructIdentOptions(feature, tag int) *models.BannerIdentOptions {
+	return &models.BannerIdentOptions{
+		FeatureId: feature,
+		TagId:     tag,
 	}
 }

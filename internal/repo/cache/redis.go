@@ -2,7 +2,7 @@ package cache
 
 import (
 	"BannerFlow/internal/config"
-	"BannerFlow/internal/services/models"
+	"BannerFlow/internal/domain/models"
 	"context"
 	"errors"
 	"github.com/go-redis/cache/v9"
