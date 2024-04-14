@@ -16,7 +16,7 @@
 ## Запуск
 ### Запуск деплоя
 - `cd deployment`
-- `docker-compose us --build -d`
+- `docker-compose up --build -d`
 - просмотреть логи `docker-compose logs <service>`
 - остановить `docker-compose down`
 ### Заупск тестов 
