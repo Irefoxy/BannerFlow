@@ -54,7 +54,7 @@ func (b *HandlerBuilder) GetHandler() http.Handler {
 	r := gin.Default()
 	r.Use(b.errorMiddleware)
 
-	r.GET("/get_token/:admin", b.handleTokenGeneration)
+	r.GET("/get_token/*admin", b.handleTokenGeneration)
 
 	authenticateGroup := r.Group("/", b.authenticate)
 	authenticateGroup.GET("/user_banner", b.handleUserGetBanner)

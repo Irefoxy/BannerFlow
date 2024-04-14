@@ -13,7 +13,7 @@ func (b *HandlerBuilder) handleTokenGeneration(c *gin.Context) {
 	var err error
 	param := api.AdminParam{}
 	err = c.ShouldBindUri(&param)
-	if err != nil && param.Admin == "admin" {
+	if err == nil && param.Admin == "/admin" {
 		token, err = b.generator.GenerateToken(true)
 	} else {
 		token, err = b.generator.GenerateToken(false)

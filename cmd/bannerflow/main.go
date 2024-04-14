@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 )
 
 func main() {
@@ -16,10 +15,6 @@ func main() {
 		a.Run()
 	}()
 
-	go func() {
-		time.Sleep(5 * time.Second)
-		stopChan <- syscall.SIGTERM
-	}()
 	<-stopChan
 	a.Stop()
 }
