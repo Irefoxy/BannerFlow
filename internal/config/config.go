@@ -9,6 +9,11 @@ import (
 	"time"
 )
 
+const (
+	flagName = "config"
+	envName  = "CONFIG_PATH"
+)
+
 type Config struct {
 	Env         string          `yaml:"env" env-default:"local"`
 	GinCfg      *HTTPConfig     `yaml:"server"`
@@ -67,10 +72,10 @@ func Load(path string) (*Config, error) {
 
 func getConfigPath() string {
 	var path string
-	flag.StringVar(&path, "config", "", "path to config file")
+	flag.StringVar(&path, flagName, "", "path to config file")
 	flag.Parse()
 	if path == "" {
-		path = os.Getenv("CONFIG_PATH")
+		path = os.Getenv(envName)
 	}
 	return path
 }
