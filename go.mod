@@ -5,6 +5,7 @@ go 1.21.0
 toolchain go1.21.8
 
 require (
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-redis/cache/v9 v9.0.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0

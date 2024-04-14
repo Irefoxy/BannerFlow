@@ -2,6 +2,7 @@ package app
 
 import (
 	"BannerFlow/internal/app/ginapp"
+	"BannerFlow/internal/auth"
 	"BannerFlow/internal/config"
 	"BannerFlow/internal/handlers"
 	"BannerFlow/internal/repo/cache"
@@ -28,6 +29,12 @@ type StoppableService interface {
 	Stop(ctx context.Context)
 }
 
+type SSO interface {
+	handlers.Authenticator
+	handlers.Authorizer
+	handlers.TokenGenerator
+}
+
 type Provider struct {
 	logger        *slog.Logger
 	cfg           *config.Config
@@ -38,6 +45,7 @@ type Provider struct {
 	handlerGetter ginapp.HandlerGetter
 	cache         banner.Cache
 	db            banner.Database
+	sso           SSO
 }
 
 func (p *Provider) Server() HTTPServer {
@@ -50,7 +58,7 @@ func (p *Provider) Server() HTTPServer {
 func (p *Provider) HandlerGetter() ginapp.HandlerGetter {
 	if p.handlerGetter == nil {
 		// TODO add auth
-		p.handlerGetter = handlers.New(p.Service(), nil, p.logger)
+		p.handlerGetter = handlers.New(p.Service(), p.SSO(), p.SSO(), p.SSO(), p.logger)
 	}
 	return p.handlerGetter
 }
@@ -74,4 +82,11 @@ func (p *Provider) Db() banner.Database {
 		p.db = db.New(p.postgres)
 	}
 	return p.db
+}
+
+func (p *Provider) SSO() SSO {
+	if p.sso == nil {
+		p.sso = auth.NewAuth()
+	}
+	return p.sso
 }

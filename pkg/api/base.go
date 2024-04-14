@@ -2,8 +2,16 @@ package api
 
 import "time"
 
+type AdminParam struct {
+	Admin string `uri:"admin"`
+}
+
 type TokenParam struct {
 	Token string `header:"token" binding:"required"`
+}
+
+type TokenResponse struct {
+	Token string `json:"token"`
 }
 
 type UserBannerParams struct {

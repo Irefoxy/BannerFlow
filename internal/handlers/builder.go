@@ -32,33 +32,41 @@ type Authorizer interface {
 	IsAdmin(token string) bool
 }
 
+type TokenGenerator interface {
+	GenerateToken(isAdmin bool) (string, error)
+}
+
 type HandlerBuilder struct {
 	srv           Service
 	authenticator Authenticator
 	logger        *slog.Logger
 	authorizer    Authorizer
+	generator     TokenGenerator
 }
 
 // New creates new handlers builder
-func New(srv Service, auth Authenticator, logger *slog.Logger) *HandlerBuilder {
-	return &HandlerBuilder{srv: srv, logger: logger, authenticator: auth}
+func New(srv Service, auth Authenticator, authorizer Authorizer, generator TokenGenerator, logger *slog.Logger) *HandlerBuilder {
+	return &HandlerBuilder{srv: srv, logger: logger, authenticator: auth, authorizer: authorizer, generator: generator}
 }
 
 // GetHandler initializes a default router with corresponding routes
 func (b *HandlerBuilder) GetHandler() http.Handler {
 	r := gin.Default()
-	r.Use(b.errorMiddleware, b.authenticate)
+	r.Use(b.errorMiddleware)
 
-	r.GET("/user_banner", b.handleUserGetBanner)
+	r.GET("/get_token/:admin", b.handleTokenGeneration)
 
-	postGroup := r.Group("/banner", b.authorize)
-	postGroup.GET("", b.handleListBanners)
-	postGroup.POST("", b.handleCreateBanner)
-	postGroup.DELETE("/:id", b.handleDeleteBanner)
-	postGroup.PATCH("/:id", b.handleUpdateBanner)
-	postGroup.GET("/versions/:id", b.handleListBannerHistory)
-	postGroup.PUT("/versions/:id/activate", b.handleSelectBannerVersion)
-	postGroup.DELETE("/banners", b.handleDeleteBanner)
+	authenticateGroup := r.Group("/", b.authenticate)
+	authenticateGroup.GET("/user_banner", b.handleUserGetBanner)
+
+	adminGroup := authenticateGroup.Group("/banner", b.authorize)
+	adminGroup.GET("", b.handleListBanners)
+	adminGroup.POST("", b.handleCreateBanner)
+	adminGroup.DELETE("/:id", b.handleDeleteBanner)
+	adminGroup.PATCH("/:id", b.handleUpdateBanner)
+	adminGroup.GET("/versions/:id", b.handleListBannerHistory)
+	adminGroup.PUT("/versions/:id/activate", b.handleSelectBannerVersion)
+	adminGroup.DELETE("/banners", b.handleDeleteBanner)
 
 	return r
 }
