@@ -49,7 +49,11 @@ func (b *HandlerBuilder) handleAuthentication(c *gin.Context) error {
 	if err != nil {
 		return e.ErrorNoToken
 	}
-	return b.authenticator.Authenticate(token.Token)
+	err = b.authenticator.Authenticate(token.Token)
+	if err != nil {
+		return e.ErrorAuthenticationFailed
+	}
+	return nil
 }
 
 func (b *HandlerBuilder) authorize(c *gin.Context) {

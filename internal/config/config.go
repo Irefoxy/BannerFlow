@@ -25,7 +25,7 @@ type Config struct {
 }
 
 type ServiceConfig struct {
-	Timeout time.Duration `yaml:"request_timeout" env-default:"5s"`
+	Timeout time.Duration `yaml:"timeout" env-default:"5s"`
 }
 
 type PostgresConfig struct {

@@ -37,7 +37,14 @@ type IFace interface {
 }
 
 func NewPostgres(ctx context.Context, dsn string) (*pgxpool.Pool, error) {
-	return pgxpool.New(ctx, dsn)
+	pool, err := pgxpool.New(ctx, dsn)
+	if err != nil {
+		return nil, err
+	}
+	if err = pool.Ping(ctx); err != nil {
+		return nil, err
+	}
+	return pool, nil
 }
 
 type PostgresDatabase struct {
@@ -55,7 +62,7 @@ func (p PostgresDatabase) Stop() {
 }
 
 func (p PostgresDatabase) Add(ctx context.Context, banner *models.Banner) (int, error) {
-	if p.pool.Ping(ctx) != nil {
+	if err := p.pool.Ping(ctx); err != nil {
 		return 0, e.ErrorFailedToConnect
 	}
 	tx, err := p.pool.Begin(ctx)
@@ -65,7 +72,11 @@ func (p PostgresDatabase) Add(ctx context.Context, banner *models.Banner) (int, 
 	defer tx.Rollback(ctx)
 	var id int
 	err = tx.QueryRow(ctx, insertBannerQuery, Attrs(banner.Content), banner.TagIds, banner.FeatureId).Scan(&id)
-	if err != nil {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		if pgErr.Code == "23505" {
+			return 0, e.ErrorConflict
+		}
 		return 0, err
 	}
 	if !banner.IsActive {

@@ -32,17 +32,17 @@ services:
     depends_on:
       - postgres
 
-  bannerflow:
-    build: ..
-    ports:
-      - "8888:8888"
-    depends_on:
-      - migrations
-      - redis
-    environment:
-      CONFIG_PATH: /run/secrets/banner_config.yaml
-    secrets:
-      - banner_config.yaml
+#  bannerflow:
+#    build: ..
+#    ports:
+#      - "8888:8888"
+#    depends_on:
+#      - migrations
+#      - redis
+#    environment:
+#      CONFIG_PATH: /run/secrets/banner_config.yaml
+#    secrets:
+#      - banner_config.yaml
 
 volumes:
   postgres_data:

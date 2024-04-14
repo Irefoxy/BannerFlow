@@ -14,7 +14,6 @@ func main() {
 	go func() {
 		a.Run()
 	}()
-
 	<-stopChan
 	a.Stop()
 }

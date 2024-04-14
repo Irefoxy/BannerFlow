@@ -15,16 +15,16 @@ type TokenResponse struct {
 }
 
 type UserBannerParams struct {
-	TagId           *int  `query:"tag_id" binding:"required,gte=0"`
-	FeatureId       *int  `query:"feature_id" binding:"required,gte=0"`
-	UseLastRevision *bool `query:"use_last_revision"`
+	TagId           *int  `form:"tag_id" binding:"required,gte=0"`
+	FeatureId       *int  `form:"feature_id" binding:"required,gte=0"`
+	UseLastRevision *bool `form:"use_last_revision"`
 }
 
 type ListBannerParams struct {
-	FeatureId *int `query:"feature_id" binding:"gte=0"`
-	TagId     *int `query:"tag_id" binding:"gte=0"`
-	Limit     *int `query:"limit" binding:"gte=1"`
-	Offset    *int `query:"offset" binding:"gte=0"`
+	FeatureId *int `form:"feature_id" binding:"gte=0"`
+	TagId     *int `form:"tag_id" binding:"gte=0"`
+	Limit     *int `form:"limit" binding:"gte=1"`
+	Offset    *int `form:"offset" binding:"gte=0"`
 }
 
 type IdParams struct {

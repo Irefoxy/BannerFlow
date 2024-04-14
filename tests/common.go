@@ -13,6 +13,7 @@ type Response struct {
 }
 
 type Test struct {
+	name string
 	Req  *http.Request
 	Resp *Response
 }
@@ -32,14 +33,14 @@ func MarshalStruct(body any) []byte {
 	return b
 }
 
-var tests []Test
-
-func GetTests() []Test {
-	return tests
-}
-
 func NewBannerIdResponse(id int) api.BannerIdResponse {
 	return api.BannerIdResponse{
 		BannerId: &id,
+	}
+}
+
+func NewBannerErrorResponse(msg string) api.BannerErrorResponse {
+	return api.BannerErrorResponse{
+		Error: &msg,
 	}
 }

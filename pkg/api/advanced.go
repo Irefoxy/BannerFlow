@@ -9,10 +9,10 @@ type BannerVersionResponse struct {
 }
 
 type DeleteBannerParams struct {
-	TagIds    *int `query:"tag_ids" binding:"required_without=FeatureId,gte=0"`
-	FeatureId *int `query:"feature_id" binding:"required_without=TagIds,gte=0"`
+	TagIds    *int `form:"tag_ids" binding:"required_without=FeatureId,gte=0"`
+	FeatureId *int `form:"feature_id" binding:"required_without=TagIds,gte=0"`
 }
 
 type SelectBannersParams struct {
-	Version int `query:"version" binding:"required,gte=1"`
+	Version int `form:"version" binding:"required,gte=1"`
 }
