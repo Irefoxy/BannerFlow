@@ -9,14 +9,7 @@ import (
 )
 
 const (
-	tagName              = "tag_id"
-	featureName          = "feature_id"
-	idName               = "id"
-	lastRevisionFlagName = "use_last_revision"
-	offsetName           = "offset"
-	limitName            = "limit"
-	tokenName            = "token"
-	versionName          = "version"
+	tokenName = "token"
 )
 
 //go:generate mockgen -source=gin_api.go -package=mocks -destination=./mocks/mock_gin_api.go
