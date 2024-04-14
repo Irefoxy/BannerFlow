@@ -27,7 +27,7 @@ CREATE OR REPLACE FUNCTION update_banner_func()
     RETURNS TRIGGER AS
 $$
 BEGIN
-    IF old.tagIds IS DISTINCT FROM new.tagIds THEN
+    IF old.tagIds IS NOT DISTINCT FROM new.tagIds THEN
         DELETE FROM feature_tag WHERE bannerid = old.id;
         CALL insert_into_feature_tag(NEW);
     END IF;

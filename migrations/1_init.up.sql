@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS banners
     tagIds     INT[],
     featureId INT,
     created   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated   TIMESTAMP DEFAULT NULL
+    updated   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS deactivated (

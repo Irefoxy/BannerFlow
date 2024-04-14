@@ -17,8 +17,9 @@ func (b *HandlerBuilder) errorMiddleware(c *gin.Context) {
 	}
 	b.log(c)
 
-	// TODO check error in the end
 	switch {
+	case errors.Is(lastErr, e.ErrorNotFound):
+		c.Status(http.StatusNotFound)
 	case errors.Is(lastErr, e.ErrorNoPermission):
 		c.Status(http.StatusForbidden)
 	case errors.Is(lastErr, e.ErrorAuthenticationFailed):

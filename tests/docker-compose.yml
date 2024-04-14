@@ -1,15 +1,13 @@
-version: '3.7'
+version: '3.8'
 
 services:
   redis:
     image: redis:alpine
-    ports:
-      - "9112:6379"
     entrypoint: /bin/sh -c 'redis-server --requirepass $(cat /run/secrets/redis_password)'
-    volumes:
-      - redis_data:/var/lib/redis/data
     secrets:
       - redis_password
+    volumes:
+      - redis_data:/var/lib/redis/test_data
 
   postgres:
     image: postgres:alpine
@@ -17,10 +15,6 @@ services:
       POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
       POSTGRES_USER: banner
       POSTGRES_DB: banners
-    ports:
-      - "9111:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
     secrets:
       - postgres_password
     healthcheck:
@@ -28,6 +22,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/test_data
 
   migrations:
     image: migrate/migrate:latest
@@ -40,8 +36,6 @@ services:
 
   bannerflow:
     build: ..
-    ports:
-      - "8888:8888"
     depends_on:
       - migrations
       - redis
@@ -49,6 +43,17 @@ services:
       CONFIG_PATH: /run/secrets/banner_config.yaml
     secrets:
       - banner_config.yaml
+
+  tester:
+    build:
+      context: ../
+      dockerfile: ./tests/Dockerfile
+    depends_on:
+      - bannerflow
+    environment:
+      SERVER_ADDR: bannerflow:8888
+    command: [ "go", "test", "-v", "./tests" ]
+
 
 volumes:
   postgres_data:

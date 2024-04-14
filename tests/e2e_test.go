@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 const (
@@ -24,6 +25,7 @@ type E2ETest struct {
 }
 
 func (t *E2ETest) SetupTest() {
+	time.Sleep(10 * time.Second)
 	t.getServerAddress()
 	t.Assert().NotEmpty(t.address, "Server address should not be empty")
 	t.client = &http.Client{}
@@ -40,9 +42,11 @@ func (t *E2ETest) doRequest(req *http.Request, expected *Response) {
 	r, err := t.client.Do(req)
 	if t.NoError(err, "Error sending request to server") {
 		t.Equal(expected.StatusCode, r.StatusCode, "Bad response from server")
-		responseBody, err := io.ReadAll(r.Body)
-		t.NoError(err, "Error reading response body")
-		t.Equal(expected.Body, responseBody, "Bad response body from server")
+		if expected.Body != nil {
+			responseBody, err := io.ReadAll(r.Body)
+			t.NoError(err, "Error reading response body")
+			t.Equal(expected.Body, responseBody, "Bad response body from server")
+		}
 		r.Body.Close()
 	}
 }
@@ -92,6 +96,14 @@ func (t *E2ETest) setDefaultBanners() {
 			Resp: &Response{
 				StatusCode: http.StatusCreated,
 				Body:       MarshalStruct(NewBannerIdResponse(1)),
+			},
+		},
+		{
+			Req: PrepareRequest(http.MethodPost, "http://"+t.address+"/banner", "application/json", t.adminToken,
+				strings.NewReader("{\n  \"tag_ids\": [\n    200\n  ],\n  \"feature_id\": 200,\n  \"content\": {\n    \"title\": \"some_title\",\n    \"text\": \"some_text\",\n    \"url\": \"some_url\"\n  },\n  \"is_active\": true\n}")),
+			Resp: &Response{
+				StatusCode: http.StatusCreated,
+				Body:       MarshalStruct(NewBannerIdResponse(2)),
 			},
 		},
 	}

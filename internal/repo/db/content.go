@@ -1,7 +1,6 @@
 package db
 
 import (
-	e "BannerFlow/internal/domain/errors"
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
@@ -14,10 +13,12 @@ func (a *Attrs) Value() (driver.Value, error) {
 }
 
 func (a *Attrs) Scan(value interface{}) error {
-	b, ok := value.([]byte)
-	if !ok {
-		return fmt.Errorf("%w: type assertion to []byte failed", e.ErrorInternal)
+	switch data := value.(type) {
+	case []byte:
+		return json.Unmarshal(data, &a)
+	case string:
+		return json.Unmarshal([]byte(data), &a)
+	default:
+		return fmt.Errorf("unsupported type: %T", value)
 	}
-
-	return json.Unmarshal(b, &a)
 }

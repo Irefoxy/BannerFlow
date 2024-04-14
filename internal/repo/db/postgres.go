@@ -18,10 +18,10 @@ const (
 	selectIdFromFeatureTagQuery      = "SELECT ARRAY_AGG(DISTINCT bannerid) ids FROM feature_tag WHERE"
 	deleteBannersQuery               = "DELETE FROM banners WHERE id = ANY($1)"
 	deleteBannerFromDeactivatedQuery = "DELETE FROM deactivated WHERE bannerid = $1"
-	insertDeactivatedBannerQuery     = "INSERT INTO deactivated (bannerid) VALUES ($1) ON CONFLICT DO NOTHING"
+	insertDeactivatedBannerQuery     = "INSERT INTO deactivated (bannerid) VALUES ($1)"
 	insertBannerQuery                = "INSERT INTO banners (content, tagIds, featureId) VALUES ($1, $2, $3) RETURNING id"
 	listBannersQuery                 = `SELECT b.id, b.content, b.created, b.updated, b.featureId, b.tagIds,
-    EXISTS (SELECT 1 FROM deactivated d WHERE d.bannerId = b.id) is_active
+    NOT EXISTS (SELECT 1 FROM deactivated d WHERE d.bannerId = b.id) is_active
 	FROM feature_tag ft 
     JOIN banners b on b.id = ft.bannerId`
 )
@@ -92,8 +92,14 @@ func (p PostgresDatabase) Update(ctx context.Context, id int, banner *models.Upd
 	if p.pool.Ping(ctx) != nil {
 		return e.ErrorFailedToConnect
 	}
-	_, err := p.pool.SendBatch(ctx, prepareUpdateBatch(id, banner)).Exec()
-	return err
+	batch := prepareUpdateBatch(id, banner)
+	br := p.pool.SendBatch(ctx, batch)
+	for i := 0; i < batch.Len(); i++ {
+		if _, err := br.Exec(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (p PostgresDatabase) GetHistoryForId(ctx context.Context, id int) ([]models.HistoryBanner, error) {
@@ -160,14 +166,11 @@ func (p PostgresDatabase) List(ctx context.Context, options *models.BannerListOp
 	rows, _ := p.pool.Query(ctx, query, args...)
 	banners, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (models.BannerExt, error) {
 		res := models.BannerExt{}
-		var attr Attrs
+		attr := make(Attrs)
 		err := row.Scan(&res.BannerId, &attr, &res.CreatedAt, &res.UpdatedAt, &res.FeatureId, &res.TagIds, &res.IsActive)
 		res.Content = attr
 		return res, err
 	})
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, nil
-	}
 	return banners, err
 }
 
@@ -186,10 +189,9 @@ func buildDeleteQuery(options *models.BannerIdentOptions) (string, []any) {
 
 func buildListQuery(options *models.BannerListOptions) (string, []any) {
 	builder := build()
+	builder(listBannersQuery, nil)
 	if options.FeatureId > models.ZeroValue || options.TagId > models.ZeroValue {
-		builder(`WHERE EXISTS (
-    				SELECT 1 FROM feature_tag ft2
-    				WHERE ft2.bannerId = b.id`, nil)
+		builder(` WHERE EXISTS (SELECT 1 FROM feature_tag ft2 WHERE ft2.bannerId = b.id`, nil)
 	}
 	if options.FeatureId > models.ZeroValue {
 		builder(" AND featureId = $", options.FeatureId)
@@ -197,9 +199,7 @@ func buildListQuery(options *models.BannerListOptions) (string, []any) {
 	if options.TagId > models.ZeroValue {
 		builder(" AND tagId = $", options.TagId)
 	}
-	builder(`)
-				group by b.id
-				ORDER BY b.id`, nil)
+	builder(`) group by b.id ORDER BY b.id`, nil)
 	if options.Limit > models.ZeroValue {
 		builder(" LIMIT $", options.Limit)
 	}
@@ -236,9 +236,9 @@ func prepareUpdateBatch(id int, banner *models.UpdateBanner) *pgx.Batch {
 	batch := &pgx.Batch{}
 	if banner.Flags&models.IsActiveBit > 0 {
 		if banner.IsActive {
-			batch.Queue(insertDeactivatedBannerQuery, id)
-		} else {
 			batch.Queue(deleteBannerFromDeactivatedQuery, id)
+		} else {
+			batch.Queue(insertDeactivatedBannerQuery, id)
 		}
 	}
 	if banner.Flags & ^models.IsActiveBit > 0 {
@@ -252,7 +252,6 @@ func build() func(str string, arg any) (string, []any) {
 	num := 1
 	var args []any
 	builder := strings.Builder{}
-	builder.WriteString(listBannersQuery)
 	return func(str string, arg any) (string, []any) {
 		builder.WriteString(str)
 		if arg != nil {
