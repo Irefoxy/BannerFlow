@@ -4,6 +4,7 @@ import (
 	e "BannerFlow/internal/domain/errors"
 	"BannerFlow/pkg/api"
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -52,7 +53,7 @@ func (b *HandlerBuilder) handleAuthentication(c *gin.Context) error {
 	}
 	err = b.authenticator.Authenticate(token.Token)
 	if err != nil {
-		return e.ErrorAuthenticationFailed
+		return fmt.Errorf("%w: %w", e.ErrorAuthenticationFailed, err)
 	}
 	return nil
 }
