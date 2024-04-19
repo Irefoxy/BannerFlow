@@ -168,8 +168,8 @@ func (b *HandlerBuilder) userGetBanner(c *gin.Context) (*models.UserBanner, erro
 
 func readRequest[T any](c *gin.Context) (*T, error) {
 	var request T
-	if err := c.ShouldBind(&request); err != nil {
-		return nil, fmt.Errorf("%w: %w", e.ErrorInRequestBody, err)
+	if err := c.ShouldBindJSON(&request); err != nil {
+		return nil, err
 	}
 	return &request, nil
 }

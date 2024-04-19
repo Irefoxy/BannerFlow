@@ -67,7 +67,7 @@ func (b *HandlerBuilder) GetHandler() http.Handler {
 	adminGroup.PATCH("/:id", b.handleUpdateBanner)
 	adminGroup.GET("/versions/:id", b.handleListBannerHistory)
 	adminGroup.PUT("/versions/:id/activate", b.handleSelectBannerVersion)
-	adminGroup.DELETE("/banners", b.handleDeleteBanner)
+	adminGroup.DELETE("/del", b.handleDeleteBannerByTagOrFeature)
 
 	return r
 }

@@ -44,6 +44,7 @@ func (s *ErrorHandlerTest) SetupTest() {
 }
 
 func (s *ErrorHandlerTest) TestErrors() {
+	const method = "GET"
 	internalResponse := "something went wrong"
 	badRequestResponse := e.ErrorBadRequest.Error()
 
@@ -60,7 +61,7 @@ func (s *ErrorHandlerTest) TestErrors() {
 	}
 	for _, test := range tests {
 		s.Run(test.name, func() {
-			req := s.prepareReq(strconv.Itoa(nums[test.err]), "")
+			req := s.prepareReq(strconv.Itoa(nums[test.err]), method, nil, "")
 			r := s.doReq(req)
 			s.compareResponse(r, &StatusBodyPair{
 				status: nums[test.err],
@@ -86,12 +87,15 @@ func (s *GetTokenTest) SetupTest() {
 }
 
 func (s *GetTokenTest) TestGetUserTokenOK() {
-	const userToken = "asdf1234"
-	const uri = "generate/"
+	const (
+		method    = "GET"
+		userToken = "asdf1234"
+		uri       = "generate/"
+	)
 
 	s.generator.EXPECT().GenerateToken(false).Return(userToken, nil)
 
-	req := s.prepareReq(uri, "")
+	req := s.prepareReq(uri, method, nil, "")
 	r := s.doReq(req)
 	s.compareResponse(r, &StatusBodyPair{
 		status: http.StatusOK,
@@ -100,11 +104,14 @@ func (s *GetTokenTest) TestGetUserTokenOK() {
 }
 
 func (s *GetTokenTest) TestGetUserTokenError() {
-	const uri = "generate/"
+	const (
+		method = "GET"
+		uri    = "generate/"
+	)
 	errorResponse := "something went wrong"
 	s.generator.EXPECT().GenerateToken(false).Return("", TestError("any"))
 
-	req := s.prepareReq(uri, "")
+	req := s.prepareReq(uri, method, nil, "")
 	r := s.doReq(req)
 	s.compareResponse(r, &StatusBodyPair{
 		status: http.StatusInternalServerError,
@@ -113,11 +120,14 @@ func (s *GetTokenTest) TestGetUserTokenError() {
 }
 
 func (s *GetTokenTest) TestGetAdminTokenOK() {
-	const adminToken = "asdf5674"
+	const (
+		method     = "GET"
+		adminToken = "asdf5674"
+	)
 	const uri = "generate/admin"
 	s.generator.EXPECT().GenerateToken(true).Return(adminToken, nil)
 
-	req := s.prepareReq(uri, "")
+	req := s.prepareReq(uri, method, nil, "")
 	r := s.doReq(req)
 	s.compareResponse(r, &StatusBodyPair{
 		status: http.StatusOK,
@@ -126,11 +136,14 @@ func (s *GetTokenTest) TestGetAdminTokenOK() {
 }
 
 func (s *GetTokenTest) TestGetAdminTokenError() {
-	const uri = "generate/"
+	const (
+		method = "GET"
+		uri    = "generate/"
+	)
 	errorResponse := "something went wrong"
 	s.generator.EXPECT().GenerateToken(false).Return("", TestError("any"))
 
-	req := s.prepareReq(uri, "")
+	req := s.prepareReq(uri, method, nil, "")
 	r := s.doReq(req)
 	s.compareResponse(r, &StatusBodyPair{
 		status: http.StatusInternalServerError,
@@ -161,13 +174,14 @@ func (s *AuthTest) SetupTest() {
 
 func (s *AuthTest) TestAuthenticateOK() {
 	const (
-		uri   = "/authenticate"
-		token = "asdf1234"
+		method = "GET"
+		uri    = "/authenticate"
+		token  = "asdf1234"
 	)
 
 	s.authenticator.EXPECT().Authenticate(token).Return(nil)
 
-	req := s.prepareReq(uri, token)
+	req := s.prepareReq(uri, method, nil, token)
 	r := s.doReq(req)
 	s.compareResponse(r, &StatusBodyPair{
 		status: http.StatusOK,
@@ -177,13 +191,14 @@ func (s *AuthTest) TestAuthenticateOK() {
 
 func (s *AuthTest) TestAuthenticateError() {
 	const (
-		uri   = "/authenticate"
-		token = "asdf1234"
+		method = "GET"
+		uri    = "/authenticate"
+		token  = "asdf1234"
 	)
 
 	s.authenticator.EXPECT().Authenticate(gomock.Any()).Return(TestError("any"))
 
-	req := s.prepareReq(uri, token)
+	req := s.prepareReq(uri, method, nil, token)
 	r := s.doReq(req)
 	s.compareResponse(r, &StatusBodyPair{
 		status: http.StatusUnauthorized,
@@ -193,6 +208,7 @@ func (s *AuthTest) TestAuthenticateError() {
 
 func (s *AuthTest) TestAuthorizeOK() {
 	const (
+		method  = "GET"
 		uri     = "/authorize"
 		token   = "asdf5674"
 		isAdmin = true
@@ -200,7 +216,7 @@ func (s *AuthTest) TestAuthorizeOK() {
 	s.authenticator.EXPECT().Authenticate(gomock.Any()).Return(nil)
 	s.authorizer.EXPECT().IsAdmin(token).Return(isAdmin)
 
-	req := s.prepareReq(uri, token)
+	req := s.prepareReq(uri, method, nil, token)
 	r := s.doReq(req)
 	s.compareResponse(r, &StatusBodyPair{
 		status: http.StatusOK,
@@ -210,6 +226,7 @@ func (s *AuthTest) TestAuthorizeOK() {
 
 func (s *AuthTest) TestAuthorizeError() {
 	const (
+		method  = "GET"
 		uri     = "/authorize"
 		token   = "asdf5674"
 		isAdmin = false
@@ -217,7 +234,7 @@ func (s *AuthTest) TestAuthorizeError() {
 	s.authenticator.EXPECT().Authenticate(gomock.Any()).Return(nil)
 	s.authorizer.EXPECT().IsAdmin(gomock.Any()).Return(isAdmin)
 
-	req := s.prepareReq(uri, token)
+	req := s.prepareReq(uri, method, nil, token)
 	r := s.doReq(req)
 	s.compareResponse(r, &StatusBodyPair{
 		status: http.StatusForbidden,

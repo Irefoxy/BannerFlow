@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"BannerFlow/pkg/api"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
@@ -27,6 +28,7 @@ func (e TestError) Error() string {
 
 type TestSuite struct {
 	suite.Suite
+	service  Service
 	router   *gin.Engine
 	handlers *HandlerBuilder
 	srv      *httptest.Server
@@ -74,10 +76,10 @@ func (st *TestSuite) compareResponse(r, expected *StatusBodyPair) {
 	}
 }
 
-func (st *TestSuite) prepareReq(path, token string) *http.Request {
+func (st *TestSuite) prepareReq(path, method string, body io.Reader, token string) *http.Request {
 	uri, err := url.JoinPath(st.srv.URL, path)
 	st.Require().NoError(err)
-	req, err := http.NewRequest("GET", uri, nil)
+	req, err := http.NewRequest(method, uri, body)
 	st.Require().NoError(err)
 	if token != "" {
 		req.Header.Set("token", token)
@@ -111,4 +113,27 @@ func marshalBody(expected any, suite *suite.Suite) []byte {
 	b, err := json.Marshal(&expected)
 	suite.NoError(err)
 	return b
+}
+
+func setBannerRequestFields(content, feature, isActive, tagIds any) *api.BannerRequest {
+	req := &api.BannerRequest{}
+	req.Content = getPtr[map[string]any](content)
+	req.FeatureId = getPtr[int](feature)
+	req.TagIds = getPtr[[]int](tagIds)
+	req.IsActive = getPtr[bool](isActive)
+	return req
+}
+
+func NewBannerErrorResponse(msg string) api.BannerErrorResponse {
+	return api.BannerErrorResponse{
+		Error: &msg,
+	}
+}
+
+func getPtr[T any](arg any) *T {
+	if arg == nil {
+		return nil
+	}
+	tmp := arg.(T)
+	return &tmp
 }

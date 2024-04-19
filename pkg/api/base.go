@@ -32,10 +32,10 @@ type IdParams struct {
 }
 
 type BannerRequest struct {
-	Content   *map[string]interface{} `json:"content" binding:"required"`
-	FeatureId *int                    `json:"feature_id" binding:"required,gte=0"`
-	IsActive  *bool                   `json:"is_active" binding:"required"`
-	TagIds    *[]int                  `json:"tag_ids" binding:"required,gte=1"`
+	Content   *map[string]interface{} `json:"content,omitempty" binding:"required"`
+	FeatureId *int                    `json:"feature_id,omitempty" binding:"required,gte=0"`
+	IsActive  *bool                   `json:"is_active,omitempty" binding:"required"`
+	TagIds    *[]int                  `json:"tag_ids,omitempty" binding:"required,gte=1"`
 }
 
 type BannerUpdateRequest struct {
