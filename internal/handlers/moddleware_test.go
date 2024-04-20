@@ -61,7 +61,7 @@ func (s *ErrorHandlerTest) TestErrors() {
 	}
 	for _, test := range tests {
 		s.Run(test.name, func() {
-			req := s.prepareReq(strconv.Itoa(nums[test.err]), method, nil, "")
+			req := s.prepareReq("/"+strconv.Itoa(nums[test.err]), method, nil, "")
 			r := s.doReq(req)
 			s.compareResponse(r, &StatusBodyPair{
 				status: nums[test.err],
@@ -90,7 +90,7 @@ func (s *GetTokenTest) TestGetUserTokenOK() {
 	const (
 		method    = "GET"
 		userToken = "asdf1234"
-		uri       = "generate/"
+		uri       = "/generate/"
 	)
 
 	s.generator.EXPECT().GenerateToken(false).Return(userToken, nil)
@@ -106,7 +106,7 @@ func (s *GetTokenTest) TestGetUserTokenOK() {
 func (s *GetTokenTest) TestGetUserTokenError() {
 	const (
 		method = "GET"
-		uri    = "generate/"
+		uri    = "/generate/"
 	)
 	errorResponse := "something went wrong"
 	s.generator.EXPECT().GenerateToken(false).Return("", TestError("any"))
@@ -124,7 +124,7 @@ func (s *GetTokenTest) TestGetAdminTokenOK() {
 		method     = "GET"
 		adminToken = "asdf5674"
 	)
-	const uri = "generate/admin"
+	const uri = "/generate/admin"
 	s.generator.EXPECT().GenerateToken(true).Return(adminToken, nil)
 
 	req := s.prepareReq(uri, method, nil, "")
@@ -138,7 +138,7 @@ func (s *GetTokenTest) TestGetAdminTokenOK() {
 func (s *GetTokenTest) TestGetAdminTokenError() {
 	const (
 		method = "GET"
-		uri    = "generate/"
+		uri    = "/generate/"
 	)
 	errorResponse := "something went wrong"
 	s.generator.EXPECT().GenerateToken(false).Return("", TestError("any"))

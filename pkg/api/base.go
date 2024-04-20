@@ -35,7 +35,7 @@ type BannerRequest struct {
 	Content   *map[string]interface{} `json:"content,omitempty" binding:"required"`
 	FeatureId *int                    `json:"feature_id,omitempty" binding:"required,gte=0"`
 	IsActive  *bool                   `json:"is_active,omitempty" binding:"required"`
-	TagIds    *[]int                  `json:"tag_ids,omitempty" binding:"required,gte=1"`
+	TagIds    *[]int                  `json:"tag_ids,omitempty" binding:"required,gte=1"` // TODO < 0
 }
 
 type BannerUpdateRequest struct {

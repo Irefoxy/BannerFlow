@@ -10,7 +10,6 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"os"
 	"strconv"
 )
@@ -28,7 +27,6 @@ func (e TestError) Error() string {
 
 type TestSuite struct {
 	suite.Suite
-	service  Service
 	router   *gin.Engine
 	handlers *HandlerBuilder
 	srv      *httptest.Server
@@ -62,6 +60,7 @@ func (st *TestSuite) StartSrv() {
 
 func (st *TestSuite) InitRouter() {
 	st.router = gin.Default()
+	gin.SetMode(gin.TestMode)
 	st.router.Use(st.handlers.errorMiddleware)
 }
 
@@ -71,14 +70,13 @@ func (st *TestSuite) TearDownTest() {
 
 func (st *TestSuite) compareResponse(r, expected *StatusBodyPair) {
 	st.Assert().Equal(expected.status, r.status)
-	if st.Equal(len(expected.body), len(r.body)) {
+	if st.Equal(len(expected.body), len(r.body), string(r.body)) {
 		st.Assert().Equal(expected.body, r.body)
 	}
 }
 
 func (st *TestSuite) prepareReq(path, method string, body io.Reader, token string) *http.Request {
-	uri, err := url.JoinPath(st.srv.URL, path)
-	st.Require().NoError(err)
+	uri := st.srv.URL + path
 	req, err := http.NewRequest(method, uri, body)
 	st.Require().NoError(err)
 	if token != "" {
@@ -128,6 +126,10 @@ func NewBannerErrorResponse(msg string) api.BannerErrorResponse {
 	return api.BannerErrorResponse{
 		Error: &msg,
 	}
+}
+
+func NewBannerIdResponse(id int) api.BannerIdResponse {
+	return api.BannerIdResponse{BannerId: &id}
 }
 
 func getPtr[T any](arg any) *T {
