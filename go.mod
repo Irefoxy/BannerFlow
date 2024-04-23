@@ -11,6 +11,7 @@ require (
 	github.com/go-redis/redismock/v9 v9.2.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/jackc/pgx/v5 v5.5.5
+	github.com/pashagolub/pgxmock/v3 v3.4.0
 	github.com/redis/go-redis/v9 v9.5.1
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/mock v0.4.0
