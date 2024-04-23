@@ -3,7 +3,6 @@ package auth
 import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
-	"sync"
 	"time"
 )
 
@@ -18,12 +17,10 @@ type Claims struct {
 }
 
 type Auth struct {
-	tokens map[string]bool
-	mu     sync.RWMutex
 }
 
 func NewAuth() *Auth {
-	return &Auth{tokens: make(map[string]bool)}
+	return &Auth{}
 }
 
 func (a *Auth) Authenticate(token string) error {
