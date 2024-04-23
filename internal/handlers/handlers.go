@@ -5,6 +5,7 @@ import (
 	"BannerFlow/internal/domain/models"
 	"BannerFlow/internal/handlers/converters"
 	"BannerFlow/pkg/api"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -85,6 +86,10 @@ func (b *HandlerBuilder) handleDeleteBanner(c *gin.Context) {
 func (b *HandlerBuilder) DeleteBannerByTagOrFeature(c *gin.Context) error {
 	params := &api.DeleteBannerParams{}
 	err := c.ShouldBindQuery(params)
+	if err != nil {
+		return fmt.Errorf("%w: %w", e.ErrorInParam, err)
+	}
+	err = validateDeleteBannerByTagOrFeature(params)
 	if err != nil {
 		return fmt.Errorf("%w: %w", e.ErrorInParam, err)
 	}
@@ -172,6 +177,15 @@ func readRequest[T any](c *gin.Context) (*T, error) {
 		return nil, err
 	}
 	return &request, nil
+}
+
+func validateDeleteBannerByTagOrFeature(params *api.DeleteBannerParams) error {
+	tagExists := params.TagId != nil
+	featureExists := params.FeatureId != nil
+	if tagExists != featureExists {
+		return nil
+	}
+	return errors.New("tag id, feature id both exist or not exist")
 }
 
 func collectErrors(c *gin.Context, err error) {

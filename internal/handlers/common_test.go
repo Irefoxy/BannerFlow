@@ -12,6 +12,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"strconv"
+	"time"
 )
 
 type StatusBodyPair struct {
@@ -122,6 +123,15 @@ func setBannerRequestFields(content, feature, isActive, tagIds any) *api.BannerR
 	return req
 }
 
+func setBannerUpdateRequestFields(content, feature, isActive, tagIds any) *api.BannerUpdateRequest {
+	req := &api.BannerUpdateRequest{}
+	req.Content = getPtr[map[string]any](content)
+	req.FeatureId = getPtr[int](feature)
+	req.TagIds = getPtr[[]int](tagIds)
+	req.IsActive = getPtr[bool](isActive)
+	return req
+}
+
 func NewBannerErrorResponse(msg string) api.BannerErrorResponse {
 	return api.BannerErrorResponse{
 		Error: &msg,
@@ -130,6 +140,27 @@ func NewBannerErrorResponse(msg string) api.BannerErrorResponse {
 
 func NewBannerIdResponse(id int) api.BannerIdResponse {
 	return api.BannerIdResponse{BannerId: &id}
+}
+
+func NewBannerResponse(id int, content map[string]any, created, updated time.Time, active bool, tags []int, feature int) api.BannerResponse {
+	return api.BannerResponse{
+		BannerId:  &id,
+		Content:   &content,
+		CreatedAt: &created,
+		FeatureId: &feature,
+		IsActive:  &active,
+		TagIds:    &tags,
+		UpdatedAt: &updated,
+	}
+}
+
+func NewHistoryResponse(content map[string]any, tags []int, feature, version int) api.BannerVersionResponse {
+	return api.BannerVersionResponse{
+		Content:   &content,
+		TagIds:    &tags,
+		FeatureId: &feature,
+		Version:   &version,
+	}
 }
 
 func getPtr[T any](arg any) *T {

@@ -21,10 +21,10 @@ type UserBannerParams struct {
 }
 
 type ListBannerParams struct {
-	FeatureId *int `form:"feature_id" binding:"gte=0"`
-	TagId     *int `form:"tag_id" binding:"gte=0"`
-	Limit     *int `form:"limit" binding:"gte=1"`
-	Offset    *int `form:"offset" binding:"gte=0"`
+	FeatureId *int `form:"feature_id" binding:"omitempty,gte=0"`
+	TagId     *int `form:"tag_id" binding:"omitempty,gte=0"`
+	Limit     *int `form:"limit" binding:"omitempty,gte=1"`
+	Offset    *int `form:"offset" binding:"omitempty,gte=0"`
 }
 
 type IdParams struct {
@@ -35,30 +35,30 @@ type BannerRequest struct {
 	Content   *map[string]interface{} `json:"content,omitempty" binding:"required"`
 	FeatureId *int                    `json:"feature_id,omitempty" binding:"required,gte=0"`
 	IsActive  *bool                   `json:"is_active,omitempty" binding:"required"`
-	TagIds    *[]int                  `json:"tag_ids,omitempty" binding:"required,gte=1"` // TODO < 0
+	TagIds    *[]int                  `json:"tag_ids,omitempty" binding:"required,gte=1,dive,gte=0"`
 }
 
 type BannerUpdateRequest struct {
-	Content   *map[string]interface{} `json:"content"`
-	FeatureId *int                    `json:"feature_id" binding:"gte=0"`
-	IsActive  *bool                   `json:"is_active" `
-	TagIds    *[]int                  `json:"tag_ids" binding:"gte=1"`
+	Content   *map[string]interface{} `json:"content,omitempty"`
+	FeatureId *int                    `json:"feature_id,omitempty" binding:"omitempty,gte=0"`
+	IsActive  *bool                   `json:"is_active,omitempty"`
+	TagIds    *[]int                  `json:"tag_ids,omitempty" binding:"omitempty,gte=1,dive,gte=0"`
 }
 
 type BannerResponse struct {
-	BannerId  *int                    `json:"banner_id" binding:"required,gt=0"`
-	Content   *map[string]interface{} `json:"content" binding:"required"`
-	CreatedAt *time.Time              `json:"created_at" binding:"required"`
-	FeatureId *int                    `json:"feature_id" binding:"required,gte=0"`
-	IsActive  *bool                   `json:"is_active" binding:"required"`
-	TagIds    *[]int                  `json:"tag_ids" binding:"required,gte=1"`
+	BannerId  *int                    `json:"banner_id"`
+	Content   *map[string]interface{} `json:"content"`
+	CreatedAt *time.Time              `json:"created_at"`
+	FeatureId *int                    `json:"feature_id"`
+	IsActive  *bool                   `json:"is_active"`
+	TagIds    *[]int                  `json:"tag_ids"`
 	UpdatedAt *time.Time              `json:"updated_at"`
 }
 
 type BannerErrorResponse struct {
-	Error *string `json:"error" binding:"required"`
+	Error *string `json:"error"`
 }
 
 type BannerIdResponse struct {
-	BannerId *int `json:"banner_id" binding:"required,gt=0"`
+	BannerId *int `json:"banner_id"`
 }

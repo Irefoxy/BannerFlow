@@ -9,8 +9,8 @@ type BannerVersionResponse struct {
 }
 
 type DeleteBannerParams struct {
-	TagIds    *int `form:"tag_ids" binding:"required_without=FeatureId,gte=0"`
-	FeatureId *int `form:"feature_id" binding:"required_without=TagIds,gte=0"`
+	TagId     *int `form:"tag_id" binding:"omitempty,gte=0"`
+	FeatureId *int `form:"feature_id" binding:"omitempty,gte=0"`
 }
 
 type SelectBannersParams struct {

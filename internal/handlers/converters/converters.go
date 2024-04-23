@@ -120,6 +120,6 @@ func HistoryBannersToVersionResponse(banners []models.HistoryBanner) []api.Banne
 func ConstructIdentOptions(params *api.DeleteBannerParams) *models.BannerIdentOptions {
 	return &models.BannerIdentOptions{
 		FeatureId: setZeroValueIfEmpty(params.FeatureId),
-		TagId:     setZeroValueIfEmpty(params.TagIds),
+		TagId:     setZeroValueIfEmpty(params.TagId),
 	}
 }
