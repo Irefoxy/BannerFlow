@@ -13,6 +13,7 @@ import (
 )
 
 const (
+	pgErrUniqueViolation             = "23505"
 	callSelectVersionProcedure       = "CALL choose_banner_from_history($1,$2)"
 	selectHistoryQuery               = "SELECT version, featureid, tagids, content FROM banner_history WHERE bannerid = $1 ORDER BY version"
 	selectIdFromFeatureTagQuery      = "SELECT ARRAY_AGG(DISTINCT bannerid) ids FROM feature_tag WHERE"
@@ -72,9 +73,9 @@ func (p PostgresDatabase) Add(ctx context.Context, banner *models.Banner) (int, 
 	defer tx.Rollback(ctx)
 	var id int
 	err = tx.QueryRow(ctx, insertBannerQuery, Attrs(banner.Content), banner.TagIds, banner.FeatureId).Scan(&id)
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) {
-		if pgErr.Code == "23505" {
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == pgErrUniqueViolation {
 			return 0, e.ErrorConflict
 		}
 		return 0, err
