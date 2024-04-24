@@ -4,6 +4,7 @@ import (
 	e "BannerFlow/internal/domain/errors"
 	"BannerFlow/internal/domain/models"
 	"context"
+	"encoding/json"
 	"errors"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/pashagolub/pgxmock/v3"
@@ -128,7 +129,7 @@ func (s *PostgresTest) TestAdd04() {
 	s.Assert().NoError(err)
 }
 
-// TestAdd04 tests case with IsActive = true and exev fails
+// TestAdd05 tests case with IsActive = true and exev fails
 func (s *PostgresTest) TestAdd05() {
 	banner := &models.Banner{
 		BaseBanner: models.BaseBanner{
@@ -155,6 +156,7 @@ func (s *PostgresTest) TestAdd05() {
 	s.Assert().ErrorIs(err, testErr)
 }
 
+// TestAdd05 tests case everything OK
 func (s *PostgresTest) TestAdd06() {
 	banner := &models.Banner{
 		BaseBanner: models.BaseBanner{
@@ -182,8 +184,207 @@ func (s *PostgresTest) TestAdd06() {
 	s.Assert().NoError(err)
 }
 
+// TestGetHistory00 tests case ping failed
+func (s *PostgresTest) TestGetHistory00() {
+	s.pool.ExpectPing().WillReturnError(testErr)
+
+	banners, err := s.postgres.GetHistoryForId(context.Background(), 1)
+	s.Assert().ErrorIs(err, e.ErrorFailedToConnect)
+	s.Assert().Nil(banners)
+}
+
+// TestGetHistory01 tests case query returns nothing
+func (s *PostgresTest) TestGetHistory01() {
+	const id = 1
+	rows := pgxmock.NewRows([]string{"version", "featureid", "tagids", "content"})
+
+	s.pool.ExpectPing()
+	s.pool.ExpectQuery(regexp.QuoteMeta(selectHistoryQuery)).WithArgs(id).WillReturnRows(rows)
+	banners, err := s.postgres.GetHistoryForId(context.Background(), id)
+	s.Assert().NoError(err)
+	s.Assert().Nil(banners)
+}
+
+// TestGetHistory02 tests case OK
+func (s *PostgresTest) TestGetHistory02() {
+	const id = 1
+	expectedBanners := []models.HistoryBanner{
+		{
+			BaseBanner: models.BaseBanner{
+				UserBanner: models.UserBanner{
+					Content: map[string]any{"title": "test"},
+				},
+				FeatureId: 1,
+				TagIds:    []int{1, 2, 3},
+			},
+			Version: 12,
+		},
+		{
+			BaseBanner: models.BaseBanner{
+				UserBanner: models.UserBanner{
+					Content: map[string]any{"title": "test2"},
+				},
+				FeatureId: 2,
+				TagIds:    []int{1, 2, 3},
+			},
+			Version: 10,
+		},
+	}
+	rows := pgxmock.NewRows([]string{"version", "featureid", "tagids", "content"})
+	for _, banner := range expectedBanners {
+		b, err := json.Marshal(banner.Content)
+		s.Require().NoError(err)
+		rows.AddRow(banner.Version, banner.FeatureId, banner.TagIds, b)
+	}
+
+	s.pool.ExpectPing()
+	s.pool.ExpectQuery(regexp.QuoteMeta(selectHistoryQuery)).WithArgs(id).WillReturnRows(rows)
+	banners, err := s.postgres.GetHistoryForId(context.Background(), id)
+	s.Assert().NoError(err)
+	s.Assert().ElementsMatch(expectedBanners, banners)
+}
+
+// TestSelectBannerVersion00 tests case ping fails
+func (s *PostgresTest) TestSelectBannerVersion00() {
+	const (
+		id      = 0
+		version = 12
+	)
+
+	s.pool.ExpectPing().WillReturnError(testErr)
+
+	err := s.postgres.SelectBannerVersion(context.Background(), id, version)
+	s.Assert().ErrorIs(err, e.ErrorFailedToConnect)
+}
+
+// TestSelectBannerVersion01 tests case exec fails
+func (s *PostgresTest) TestSelectBannerVersion01() {
+	const (
+		id      = 0
+		version = 12
+	)
+
+	s.pool.ExpectPing()
+	s.pool.ExpectExec(regexp.QuoteMeta(callSelectVersionProcedure)).WithArgs(id, version).WillReturnError(testErr)
+
+	err := s.postgres.SelectBannerVersion(context.Background(), id, version)
+	s.Assert().ErrorIs(err, testErr)
+}
+
+// TestSelectBannerVersion02 tests case OK
+func (s *PostgresTest) TestSelectBannerVersion02() {
+	const (
+		id      = 0
+		version = 12
+	)
+
+	s.pool.ExpectPing()
+	s.pool.ExpectExec(regexp.QuoteMeta(callSelectVersionProcedure)).WithArgs(id, version).WillReturnResult(pgxmock.NewResult("exec", 1))
+
+	err := s.postgres.SelectBannerVersion(context.Background(), id, version)
+	s.Assert().NoError(err)
+}
+
+// TestDelete00 tests case ping fails
+func (s *PostgresTest) TestDelete00() {
+	ids := []int{1, 2, 3}
+
+	s.pool.ExpectPing().WillReturnError(testErr)
+
+	err := s.postgres.DeleteByIds(context.Background(), ids...)
+	s.Assert().ErrorIs(err, e.ErrorFailedToConnect)
+}
+
+// TestDelete01 tests case exec fails
+func (s *PostgresTest) TestDelete01() {
+	ids := []int{1, 2, 3}
+
+	s.pool.ExpectPing()
+	s.pool.ExpectExec(regexp.QuoteMeta(deleteBannersQuery)).WithArgs(ids).WillReturnError(testErr)
+
+	err := s.postgres.DeleteByIds(context.Background(), ids...)
+	s.Assert().ErrorIs(err, testErr)
+}
+
+// TestDelete02 tests case nothing deleted
+func (s *PostgresTest) TestDelete02() {
+	ids := []int{1, 2, 3}
+
+	s.pool.ExpectPing()
+	s.pool.ExpectExec(regexp.QuoteMeta(deleteBannersQuery)).WithArgs(ids).WillReturnResult(pgxmock.NewResult("exec", 0))
+
+	err := s.postgres.DeleteByIds(context.Background(), ids...)
+	s.Assert().ErrorIs(err, e.ErrorNotFound)
+}
+
+// TestDelete03 tests case OK
+func (s *PostgresTest) TestDelete03() {
+	ids := []int{1, 2, 3}
+
+	s.pool.ExpectPing()
+	s.pool.ExpectExec(regexp.QuoteMeta(deleteBannersQuery)).WithArgs(ids).WillReturnResult(pgxmock.NewResult("exec", 3))
+
+	err := s.postgres.DeleteByIds(context.Background(), ids...)
+	s.Assert().NoError(err)
+}
+
+// TestSelectBannerVersion00 tests case ping fails
+func (s *PostgresTest) TestListBanners00() {
+	options := &models.BannerListOptions{
+		BannerIdentOptions: models.BannerIdentOptions{
+			FeatureId: 1,
+			TagId:     1,
+		},
+		Limit:  12,
+		Offset: 10,
+	}
+	pgxmock.NewRows()
+	s.pool.ExpectPing().WillReturnError(testErr)
+
+	banners, err := s.postgres.List(context.Background(), options)
+	s.Assert().ErrorIs(err, e.ErrorFailedToConnect)
+	s.Assert().Nil(banners)
+}
+
+// TestSelectBannerVersion01 tests case exec fails
+func (s *PostgresTest) TestListBanners01() {
+	options := &models.BannerListOptions{
+		BannerIdentOptions: models.BannerIdentOptions{
+			FeatureId: 1,
+			TagId:     1,
+		},
+		Limit:  12,
+		Offset: 10,
+	}
+	query, args := buildListQuery(options)
+	s.pool.ExpectPing()
+	s.pool.ExpectQuery(regexp.QuoteMeta(query)).WithArgs(args...).WillReturnError(testErr)
+
+	banners, err := s.postgres.List(context.Background(), options)
+	s.Assert().ErrorIs(err, testErr)
+	s.Assert().Nil(banners)
+}
+
+// TestSelectBannerVersion02 tests case OK
+func (s *PostgresTest) TestListBanners02() {
+	options := &models.BannerListOptions{
+		BannerIdentOptions: models.BannerIdentOptions{
+			FeatureId: 1,
+			TagId:     1,
+		},
+		Limit:  12,
+		Offset: 10,
+	}
+
+	s.pool.ExpectPing()
+	s.pool.ExpectQuery(regexp.QuoteMeta(listBannersQuery+"*")).WithArgs(options.FeatureId, options.TagId, options.Limit, options.Offset).WillReturnError(testErr)
+
+	banners, err := s.postgres.List(context.Background(), options)
+	s.Assert().ErrorIs(err, e.ErrorFailedToConnect)
+	s.Assert().Nil(banners)
+}
+
 func (s *PostgresTest) TearDownTest() {
-	s.pool.Close()
 	s.Assert().NoError(s.pool.ExpectationsWereMet())
 }
 

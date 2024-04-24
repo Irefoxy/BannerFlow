@@ -104,18 +104,27 @@ func (p PostgresDatabase) Update(ctx context.Context, id int, banner *models.Upd
 }
 
 func (p PostgresDatabase) GetHistoryForId(ctx context.Context, id int) ([]models.HistoryBanner, error) {
+	if p.pool.Ping(ctx) != nil {
+		return nil, e.ErrorFailedToConnect
+	}
 	rows, _ := p.pool.Query(ctx, selectHistoryQuery, id)
 	historyBanners, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (models.HistoryBanner, error) {
 		res := models.HistoryBanner{}
 		var attr Attrs
-		err := row.Scan(&res.Version, &res.FeatureId, &res.TagIds, attr)
+		err := row.Scan(&res.Version, &res.FeatureId, &res.TagIds, &attr)
 		res.Content = attr
 		return res, err
 	})
+	if len(historyBanners) == 0 {
+		return nil, nil
+	}
 	return historyBanners, err
 }
 
 func (p PostgresDatabase) SelectBannerVersion(ctx context.Context, id, version int) error {
+	if p.pool.Ping(ctx) != nil {
+		return e.ErrorFailedToConnect
+	}
 	_, err := p.pool.Exec(ctx, callSelectVersionProcedure, id, version)
 	return err
 }
@@ -172,6 +181,9 @@ func (p PostgresDatabase) List(ctx context.Context, options *models.BannerListOp
 		res.Content = attr
 		return res, err
 	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
 	return banners, err
 }
 
