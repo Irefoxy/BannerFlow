@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"regexp"
 	"testing"
+	"time"
 )
 
 var testErr = errors.New("test")
@@ -193,8 +194,20 @@ func (s *PostgresTest) TestGetHistory00() {
 	s.Assert().Nil(banners)
 }
 
-// TestGetHistory01 tests case query returns nothing
+// TestGetHistory01 tests case query returns err
 func (s *PostgresTest) TestGetHistory01() {
+	const id = 1
+	rows := pgxmock.NewRows([]string{"version", "featureid", "tagids", "content"}).RowError(0, testErr)
+
+	s.pool.ExpectPing()
+	s.pool.ExpectQuery(regexp.QuoteMeta(selectHistoryQuery)).WithArgs(id).WillReturnRows(rows)
+	banners, err := s.postgres.GetHistoryForId(context.Background(), id)
+	s.Assert().ErrorIs(err, testErr)
+	s.Assert().Nil(banners)
+}
+
+// TestGetHistory02 tests case query returns nothing
+func (s *PostgresTest) TestGetHistory02() {
 	const id = 1
 	rows := pgxmock.NewRows([]string{"version", "featureid", "tagids", "content"})
 
@@ -205,8 +218,8 @@ func (s *PostgresTest) TestGetHistory01() {
 	s.Assert().Nil(banners)
 }
 
-// TestGetHistory02 tests case OK
-func (s *PostgresTest) TestGetHistory02() {
+// TestGetHistory03 tests case OK
+func (s *PostgresTest) TestGetHistory03() {
 	const id = 1
 	expectedBanners := []models.HistoryBanner{
 		{
@@ -338,7 +351,6 @@ func (s *PostgresTest) TestListBanners00() {
 		Limit:  12,
 		Offset: 10,
 	}
-	pgxmock.NewRows()
 	s.pool.ExpectPing().WillReturnError(testErr)
 
 	banners, err := s.postgres.List(context.Background(), options)
@@ -357,8 +369,10 @@ func (s *PostgresTest) TestListBanners01() {
 		Offset: 10,
 	}
 	query, args := buildListQuery(options)
+	rows := pgxmock.NewRows([]string{"id", "content", "created", "updated", "featureId", "tagIds", "isactive"}).RowError(0, testErr)
+
 	s.pool.ExpectPing()
-	s.pool.ExpectQuery(regexp.QuoteMeta(query)).WithArgs(args...).WillReturnError(testErr)
+	s.pool.ExpectQuery(regexp.QuoteMeta(query)).WithArgs(args...).WillReturnRows(rows)
 
 	banners, err := s.postgres.List(context.Background(), options)
 	s.Assert().ErrorIs(err, testErr)
@@ -375,15 +389,154 @@ func (s *PostgresTest) TestListBanners02() {
 		Limit:  12,
 		Offset: 10,
 	}
+	expectedBanners := []models.BannerExt{
+		{
+			BannerId: 1,
+			Banner: models.Banner{
+				BaseBanner: models.BaseBanner{
+					UserBanner: models.UserBanner{
+						Content: map[string]any{"content": "test"},
+					},
+					FeatureId: 1,
+					TagIds:    []int{1, 2, 3},
+				},
+				IsActive: false,
+			},
+			UpdatedAt: time.Now(),
+			CreatedAt: time.Now(),
+		},
+		{
+			BannerId: 2,
+			Banner: models.Banner{
+				BaseBanner: models.BaseBanner{
+					UserBanner: models.UserBanner{
+						Content: map[string]any{"content": "test"},
+					},
+					FeatureId: 2,
+					TagIds:    []int{1, 2, 3},
+				},
+				IsActive: true,
+			},
+			UpdatedAt: time.Now(),
+			CreatedAt: time.Now(),
+		},
+	}
+	query, args := buildListQuery(options)
+	rows := pgxmock.NewRows([]string{"id", "content", "created", "updated", "featureId", "tagIds", "isactive"})
+	for _, banner := range expectedBanners {
+		rows.AddRow(banner.BannerId, banner.Content, banner.CreatedAt, banner.UpdatedAt, banner.FeatureId, banner.TagIds, banner.IsActive)
+	}
 
 	s.pool.ExpectPing()
-	s.pool.ExpectQuery(regexp.QuoteMeta(listBannersQuery+"*")).WithArgs(options.FeatureId, options.TagId, options.Limit, options.Offset).WillReturnError(testErr)
+	s.pool.ExpectQuery(regexp.QuoteMeta(query)).WithArgs(args...).WillReturnRows(rows)
 
 	banners, err := s.postgres.List(context.Background(), options)
-	s.Assert().ErrorIs(err, e.ErrorFailedToConnect)
-	s.Assert().Nil(banners)
+	s.Assert().NoError(err)
+	s.Assert().ElementsMatch(banners, expectedBanners)
 }
 
+// TestDeleteByParam00 tests case ping fails
+func (s *PostgresTest) TestDeleteByParam00() {
+	options := &models.BannerIdentOptions{
+		FeatureId: 1,
+		TagId:     models.ZeroValue,
+	}
+	s.pool.ExpectPing().WillReturnError(testErr)
+
+	err := s.postgres.DeleteByFeatureOrTag(context.Background(), options)
+	s.Assert().ErrorIs(err, e.ErrorFailedToConnect)
+}
+
+// TestDeleteByParam01 tests case Begin fails
+func (s *PostgresTest) TestDeleteByParam01() {
+	options := &models.BannerIdentOptions{
+		FeatureId: 1,
+		TagId:     models.ZeroValue,
+	}
+	s.pool.ExpectPing()
+	s.pool.ExpectBegin().WillReturnError(testErr)
+
+	err := s.postgres.DeleteByFeatureOrTag(context.Background(), options)
+	s.Assert().ErrorIs(err, testErr)
+}
+
+// TestDeleteByParam02 tests case query fails
+func (s *PostgresTest) TestDeleteByParam02() {
+	options := &models.BannerIdentOptions{
+		FeatureId: 1,
+		TagId:     models.ZeroValue,
+	}
+	query, args := buildDeleteQuery(options)
+
+	s.pool.ExpectPing()
+	s.pool.ExpectBegin()
+	s.pool.ExpectQuery(regexp.QuoteMeta(query)).WithArgs(args...).WillReturnError(testErr)
+	s.pool.ExpectRollback()
+	err := s.postgres.DeleteByFeatureOrTag(context.Background(), options)
+	s.Assert().ErrorIs(err, testErr)
+}
+
+// TestDeleteByParam03 tests case query returns nothing
+func (s *PostgresTest) TestDeleteByParam03() {
+	options := &models.BannerIdentOptions{
+		FeatureId: 1,
+		TagId:     models.ZeroValue,
+	}
+	query, args := buildDeleteQuery(options)
+	row := pgxmock.NewRows([]string{"id"})
+
+	s.pool.ExpectPing()
+	s.pool.ExpectBegin()
+	s.pool.ExpectQuery(regexp.QuoteMeta(query)).WithArgs(args...).WillReturnRows(row)
+	s.pool.ExpectRollback()
+	err := s.postgres.DeleteByFeatureOrTag(context.Background(), options)
+	s.Assert().ErrorIs(err, e.ErrorNotFound)
+}
+
+// TestDeleteByParam04 tests case exec fails
+func (s *PostgresTest) TestDeleteByParam04() {
+	options := &models.BannerIdentOptions{
+		FeatureId: 1,
+		TagId:     models.ZeroValue,
+	}
+	expectedIds := []int{1, 2, 3}
+
+	query, args := buildDeleteQuery(options)
+	row := pgxmock.NewRows([]string{"id"})
+	row.AddRow(expectedIds)
+
+	s.pool.ExpectPing()
+	s.pool.ExpectBegin()
+	s.pool.ExpectQuery(regexp.QuoteMeta(query)).WithArgs(args...).WillReturnRows(row)
+	s.pool.ExpectExec(regexp.QuoteMeta(deleteBannersQuery)).WithArgs(expectedIds).WillReturnError(testErr)
+	s.pool.ExpectRollback()
+
+	err := s.postgres.DeleteByFeatureOrTag(context.Background(), options)
+	s.Assert().ErrorIs(err, testErr)
+}
+
+// TestDeleteByParam05 tests case exec fails
+func (s *PostgresTest) TestDeleteByParam05() {
+	options := &models.BannerIdentOptions{
+		FeatureId: 1,
+		TagId:     models.ZeroValue,
+	}
+	expectedIds := []int{1, 2, 3}
+
+	query, args := buildDeleteQuery(options)
+	row := pgxmock.NewRows([]string{"id"})
+	row.AddRow(expectedIds)
+
+	s.pool.ExpectPing()
+	s.pool.ExpectBegin()
+	s.pool.ExpectQuery(regexp.QuoteMeta(query)).WithArgs(args...).WillReturnRows(row)
+	s.pool.ExpectExec(regexp.QuoteMeta(deleteBannersQuery)).WithArgs(expectedIds).WillReturnResult(pgxmock.NewResult("exec", 3))
+	s.pool.ExpectCommit()
+	s.pool.ExpectRollback()
+
+	err := s.postgres.DeleteByFeatureOrTag(context.Background(), options)
+	s.Assert().NoError(err)
+}
 func (s *PostgresTest) TearDownTest() {
 	s.Assert().NoError(s.pool.ExpectationsWereMet())
 }
