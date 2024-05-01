@@ -111,6 +111,7 @@ func TestList(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
+	const id = 123
 	tests := []struct {
 		name         string
 		banner       *models.UpdateBanner
@@ -131,8 +132,8 @@ func TestUpdate(t *testing.T) {
 				},
 				Flags: models.FeatureBit,
 			},
-			expectedSql:  "UPDATE banners SET featureId=$1",
-			expectedArgs: []any{1},
+			expectedSql:  "UPDATE banners SET featureId=$1 WHERE id = $2",
+			expectedArgs: []any{1, id},
 		},
 		{
 			name: "With feature and tags",
@@ -148,8 +149,8 @@ func TestUpdate(t *testing.T) {
 				},
 				Flags: models.FeatureBit | models.TagBit,
 			},
-			expectedSql:  "UPDATE banners SET featureId=$1, tagIds=$2",
-			expectedArgs: []any{1, []int{1, 2, 3}},
+			expectedSql:  "UPDATE banners SET featureId=$1, tagIds=$2 WHERE id = $3",
+			expectedArgs: []any{1, []int{1, 2, 3}, id},
 		},
 		{
 			name: "With feature, tags and content",
@@ -165,15 +166,15 @@ func TestUpdate(t *testing.T) {
 				},
 				Flags: models.FeatureBit | models.TagBit | models.ContentBit,
 			},
-			expectedSql:  "UPDATE banners SET featureId=$1, tagIds=$2, content=$3",
-			expectedArgs: []any{1, []int{1, 2, 3}, Attrs(map[string]any{"test": "test"})},
+			expectedSql:  "UPDATE banners SET featureId=$1, tagIds=$2, content=$3 WHERE id = $4",
+			expectedArgs: []any{1, []int{1, 2, 3}, Attrs(map[string]any{"test": "test"}), id},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			at := assert.New(t)
-			sql, args := buildUpdateQuery(test.banner)
+			sql, args := buildUpdateQuery(test.banner, id)
 			at.Equal(test.expectedSql, sql)
 			at.Equal(test.expectedArgs, args)
 		})

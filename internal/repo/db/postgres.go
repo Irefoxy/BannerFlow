@@ -94,8 +94,12 @@ func (p PostgresDatabase) Update(ctx context.Context, id int, banner *models.Upd
 	batch := prepareUpdateBatch(id, banner)
 	br := p.pool.SendBatch(ctx, batch)
 	for i := 0; i < batch.Len(); i++ {
-		if _, err := br.Exec(); err != nil {
+		tag, err := br.Exec()
+		if err != nil {
 			return err
+		}
+		if tag.Update() && tag.RowsAffected() == 0 {
+			return e.ErrorNotFound
 		}
 	}
 	return nil
@@ -116,9 +120,7 @@ func (p PostgresDatabase) GetHistoryForId(ctx context.Context, id int) ([]models
 	if err != nil {
 		return nil, err
 	}
-	if len(historyBanners) == 0 {
-		return nil, nil
-	}
+	// TODO update tests
 	return historyBanners, nil
 }
 
@@ -184,9 +186,6 @@ func (p PostgresDatabase) List(ctx context.Context, options *models.BannerListOp
 	})
 	if err != nil {
 		return nil, err
-	}
-	if len(banners) == 0 {
-		return nil, nil
-	}
+	} // TODO update tests
 	return banners, nil
 }

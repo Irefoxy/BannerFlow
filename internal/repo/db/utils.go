@@ -46,7 +46,7 @@ func buildListQuery(options *models.BannerListOptions) (string, []any) {
 	return builder("", nil)
 }
 
-func buildUpdateQuery(banner *models.UpdateBanner) (string, []any) {
+func buildUpdateQuery(banner *models.UpdateBanner, id int) (string, []any) {
 	builder := build()
 	var args []any
 	addComma := func() {
@@ -66,6 +66,7 @@ func buildUpdateQuery(banner *models.UpdateBanner) (string, []any) {
 		addComma()
 		_, args = builder(" content=$", Attrs(banner.Content))
 	}
+	builder(" WHERE id = $", id)
 	return builder("", nil)
 }
 
@@ -79,7 +80,7 @@ func prepareUpdateBatch(id int, banner *models.UpdateBanner) *pgx.Batch {
 		}
 	}
 	if banner.Flags & ^models.IsActiveBit > 0 {
-		query, args := buildUpdateQuery(banner)
+		query, args := buildUpdateQuery(banner, id)
 		batch.Queue(query, args...)
 	}
 	return batch

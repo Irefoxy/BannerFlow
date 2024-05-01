@@ -537,6 +537,7 @@ func (s *PostgresTest) TestDeleteByParam05() {
 	err := s.postgres.DeleteByFeatureOrTag(context.Background(), options)
 	s.Assert().NoError(err)
 }
+
 func (s *PostgresTest) TearDownTest() {
 	s.Assert().NoError(s.pool.ExpectationsWereMet())
 }
