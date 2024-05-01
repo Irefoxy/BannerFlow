@@ -141,6 +141,10 @@ func (s *Service) SelectBannerVersion(ctx context.Context, id, version int) erro
 	defer cancel()
 	err := s.db.SelectBannerVersion(newCtx, id, version)
 	if err != nil {
+		if errors.Is(err, e.ErrorNotFound) {
+			log.Info("no banner found")
+			return e.ErrorNotFound
+		}
 		log.Warn(err.Error())
 		return e.ErrorInternal
 	}
@@ -191,12 +195,15 @@ func (s *Service) ListBanners(ctx context.Context, options *models.BannerListOpt
 	}
 	newCtx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
-	list, err := s.db.List(newCtx, options)
+	banners, err := s.db.List(newCtx, options)
 	if err != nil {
 		log.Warn(err.Error())
 		return nil, e.ErrorInternal
 	}
-	return list, nil
+	if len(banners) == 0 {
+		log.Info("no banner found")
+	}
+	return banners, nil
 }
 
 func (s *Service) UserGetBanners(ctx context.Context, options *models.BannerUserOptions) (*models.UserBanner, error) {

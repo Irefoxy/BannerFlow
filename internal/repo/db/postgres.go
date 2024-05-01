@@ -12,6 +12,7 @@ import (
 
 const (
 	pgErrUniqueViolation             = "23505"
+	pgErrRaiseException              = "P0001"
 	callSelectVersionProcedure       = "CALL choose_banner_from_history($1,$2)"
 	selectHistoryQuery               = "SELECT version, featureid, tagids, content FROM banner_history WHERE bannerid = $1 ORDER BY version"
 	selectIdFromFeatureTagQuery      = "SELECT ARRAY_AGG(DISTINCT bannerid) ids FROM feature_tag WHERE"
@@ -93,6 +94,7 @@ func (p PostgresDatabase) Update(ctx context.Context, id int, banner *models.Upd
 	}
 	batch := prepareUpdateBatch(id, banner)
 	br := p.pool.SendBatch(ctx, batch)
+	defer br.Close()
 	for i := 0; i < batch.Len(); i++ {
 		tag, err := br.Exec()
 		if err != nil {
@@ -120,7 +122,6 @@ func (p PostgresDatabase) GetHistoryForId(ctx context.Context, id int) ([]models
 	if err != nil {
 		return nil, err
 	}
-	// TODO update tests
 	return historyBanners, nil
 }
 
@@ -129,6 +130,10 @@ func (p PostgresDatabase) SelectBannerVersion(ctx context.Context, id, version i
 		return e.ErrorFailedToConnect
 	}
 	_, err := p.pool.Exec(ctx, callSelectVersionProcedure, id, version)
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Code == pgErrRaiseException {
+		return e.ErrorNotFound
+	}
 	return err
 }
 
@@ -186,6 +191,6 @@ func (p PostgresDatabase) List(ctx context.Context, options *models.BannerListOp
 	})
 	if err != nil {
 		return nil, err
-	} // TODO update tests
+	}
 	return banners, nil
 }

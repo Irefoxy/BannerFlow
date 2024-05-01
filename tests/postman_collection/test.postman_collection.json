@@ -1,0 +1,1537 @@
+{
+	"info": {
+		"_postman_id": "8717ba0d-ec35-4e48-891f-0c62f206f6bd",
+		"name": "test",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "33375051"
+	},
+	"item": [
+		{
+			"name": "user token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"should be ok\", function () {",
+							"    pm.expect(pm.response.code).to.equal(200);",
+							"    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+							"});",
+							"var response = pm.response.json();",
+							"pm.collectionVariables.set(\"user_token\", response.token);",
+							"pm.test(\"var should be set\", function () {",
+							"    pm.expect(pm.collectionVariables.get(\"user_token\")).to.be.not.empty;",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER_ADDR}}/get_token",
+					"host": [
+						"{{SERVER_ADDR}}"
+					],
+					"path": [
+						"get_token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "admin token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"should be ok\", function () {",
+							"    pm.expect(pm.response.code).to.equal(200);",
+							"    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+							"});",
+							"var response = pm.response.json();",
+							"pm.collectionVariables.set(\"admin_token\", response.token);",
+							"pm.test(\"var should be set\", function () {",
+							"    pm.expect(pm.collectionVariables.get(\"admin_token\")).to.be.not.empty;",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER_ADDR}}/get_token/admin",
+					"host": [
+						"{{SERVER_ADDR}}"
+					],
+					"path": [
+						"get_token",
+						"admin"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete - not found",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response should be not found\", function () {",
+							"    pm.response.to.have.status(404);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"description": "Токен админа",
+						"key": "token",
+						"value": "{{admin_token}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{SERVER_ADDR}}/banner/:id",
+					"host": [
+						"{{SERVER_ADDR}}"
+					],
+					"path": [
+						"banner",
+						":id"
+					],
+					"variable": [
+						{
+							"key": "id",
+							"value": "123",
+							"description": "(Required) "
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Updated - not found",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200 upon successful banner update\", function () {",
+							"  pm.response.to.have.status(404);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"description": "Токен админа",
+						"key": "token",
+						"value": "{{admin_token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"feature_id\": 1,\n  \"content\": {\n    \"incididunt_3\": true\n  }\n}",
+					"options": {
+						"raw": {
+							"headerFamily": "json",
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{SERVER_ADDR}}/banner/:id",
+					"host": [
+						"{{SERVER_ADDR}}"
+					],
+					"path": [
+						"banner",
+						":id"
+					],
+					"variable": [
+						{
+							"key": "id",
+							"value": "111",
+							"description": "(Required) "
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "User get - not found",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test to check for the 'not found' response status",
+							"pm.test(\"Response status code is 404 \", function () {",
+							"    pm.response.to.have.status(404);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"description": "Токен пользователя",
+						"key": "token",
+						"value": "{{user_token}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{SERVER_ADDR}}/user_banner?tag_id=111&feature_id=222&use_last_revision=false",
+					"host": [
+						"{{SERVER_ADDR}}"
+					],
+					"path": [
+						"user_banner"
+					],
+					"query": [
+						{
+							"key": "tag_id",
+							"value": "111",
+							"description": "(Required) "
+						},
+						{
+							"key": "feature_id",
+							"value": "222",
+							"description": "(Required) "
+						},
+						{
+							"key": "use_last_revision",
+							"value": "false"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List - not found",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 404 \", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response body is JSON and is null\", function () {",
+							"    pm.expect(pm.response).to.have.jsonBody(null);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"description": "Токен админа",
+						"key": "token",
+						"value": "{{admin_token}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{SERVER_ADDR}}/banner?feature_id=111",
+					"host": [
+						"{{SERVER_ADDR}}"
+					],
+					"path": [
+						"banner"
+					],
+					"query": [
+						{
+							"key": "feature_id",
+							"value": "111"
+						},
+						{
+							"key": "tag_id",
+							"value": "<integer>",
+							"disabled": true
+						},
+						{
+							"key": "limit",
+							"value": "<integer>",
+							"disabled": true
+						},
+						{
+							"key": "offset",
+							"value": "<integer>",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Select version - not found",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 404\", function () {",
+							"    pm.response.to.have.status(404);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"description": "Токен админа",
+						"key": "token",
+						"value": "{{admin_token}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{SERVER_ADDR}}/banner/versions/:id/activate?version=1",
+					"host": [
+						"{{SERVER_ADDR}}"
+					],
+					"path": [
+						"banner",
+						"versions",
+						":id",
+						"activate"
+					],
+					"query": [
+						{
+							"key": "version",
+							"value": "1"
+						}
+					],
+					"variable": [
+						{
+							"key": "id",
+							"value": "123"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List history - not found",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 404\", function () {",
+							"    pm.response.to.have.status(404);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"description": "Токен админа",
+						"key": "token",
+						"value": "{{admin_token}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{SERVER_ADDR}}/banner/versions/:id",
+					"host": [
+						"{{SERVER_ADDR}}"
+					],
+					"path": [
+						"banner",
+						"versions",
+						":id"
+					],
+					"variable": [
+						{
+							"key": "id",
+							"value": "123"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Created",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(201);",
+							"    ",
+							"});",
+							"pm.test(\"Response contains an integer ID\", function () {",
+							"    var responseData = pm.response.json();",
+							"    pm.expect(responseData).to.have.property('banner_id').that.is.a('number');",
+							"    pm.collectionVariables.set(\"id\", responseData.banner_id);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"description": "Токен админа",
+						"key": "token",
+						"value": "{{admin_token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"tag_ids\": [\n    1,\n    2\n  ],\n  \"feature_id\": 1,\n  \"content\": {\n    \"magna_9\": \"velit quis proident\"\n  },\n  \"is_active\": false\n}",
+					"options": {
+						"raw": {
+							"headerFamily": "json",
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{SERVER_ADDR}}/banner",
+					"host": [
+						"{{SERVER_ADDR}}"
+					],
+					"path": [
+						"banner"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Created Conflict",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 400\", function () {",
+							"    pm.response.to.have.status(400);",
+							"    ",
+							"});",
+							"pm.test(\"Response contains a string error\", function () {",
+							"    var responseData = pm.response.json();",
+							"    pm.expect(responseData).to.have.property('error').that.is.a('string').and.to.equal(\"request is invalid: banner already exists\");",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"description": "Токен админа",
+						"key": "token",
+						"value": "{{admin_token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"tag_ids\": [\n    1,\n    2\n  ],\n  \"feature_id\": 1,\n  \"content\": {\n    \"magna_9\": \"velit quis proident\"\n  },\n  \"is_active\": false\n}",
+					"options": {
+						"raw": {
+							"headerFamily": "json",
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{SERVER_ADDR}}/banner",
+					"host": [
+						"{{SERVER_ADDR}}"
+					],
+					"path": [
+						"banner"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Updated",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200 upon successful banner update\", function () {",
+							"  pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"description": "Токен админа",
+						"key": "token",
+						"value": "{{admin_token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"feature_id\": 2,\n  \"content\": {\n    \"test\": true\n  },\n  \"is_active\":true\n}",
+					"options": {
+						"raw": {
+							"headerFamily": "json",
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{SERVER_ADDR}}/banner/:id",
+					"host": [
+						"{{SERVER_ADDR}}"
+					],
+					"path": [
+						"banner",
+						":id"
+					],
+					"variable": [
+						{
+							"key": "id",
+							"value": "{{id}}",
+							"description": "(Required) "
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "User get - OK",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200\", function () {",
+							"  pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"description": "Токен пользователя",
+						"key": "token",
+						"value": "{{user_token}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{SERVER_ADDR}}/user_banner?tag_id=1&feature_id=2&use_last_revision=false",
+					"host": [
+						"{{SERVER_ADDR}}"
+					],
+					"path": [
+						"user_banner"
+					],
+					"query": [
+						{
+							"key": "tag_id",
+							"value": "1",
+							"description": "(Required) "
+						},
+						{
+							"key": "feature_id",
+							"value": "2",
+							"description": "(Required) "
+						},
+						{
+							"key": "use_last_revision",
+							"value": "false"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Updated for test",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200 upon successful banner update\", function () {",
+							"  pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"description": "Токен админа",
+						"key": "token",
+						"value": "{{admin_token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"is_active\":false\n}",
+					"options": {
+						"raw": {
+							"headerFamily": "json",
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{SERVER_ADDR}}/banner/:id",
+					"host": [
+						"{{SERVER_ADDR}}"
+					],
+					"path": [
+						"banner",
+						":id"
+					],
+					"variable": [
+						{
+							"key": "id",
+							"value": "{{id}}",
+							"description": "(Required) "
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "User get - OK - old",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200\", function () {",
+							"  pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"description": "Токен пользователя",
+						"key": "token",
+						"value": "{{user_token}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{SERVER_ADDR}}/user_banner?tag_id=1&feature_id=2&use_last_revision=false",
+					"host": [
+						"{{SERVER_ADDR}}"
+					],
+					"path": [
+						"user_banner"
+					],
+					"query": [
+						{
+							"key": "tag_id",
+							"value": "1",
+							"description": "(Required) "
+						},
+						{
+							"key": "feature_id",
+							"value": "2",
+							"description": "(Required) "
+						},
+						{
+							"key": "use_last_revision",
+							"value": "false"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "User get - not found - new version",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test to check for the 'not found' response status",
+							"pm.test(\"Response status code is 404 \", function () {",
+							"    pm.response.to.have.status(404);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"description": "Токен пользователя",
+						"key": "token",
+						"value": "{{user_token}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{SERVER_ADDR}}/user_banner?tag_id=1&feature_id=2&use_last_revision=true",
+					"host": [
+						"{{SERVER_ADDR}}"
+					],
+					"path": [
+						"user_banner"
+					],
+					"query": [
+						{
+							"key": "tag_id",
+							"value": "1",
+							"description": "(Required) "
+						},
+						{
+							"key": "feature_id",
+							"value": "2",
+							"description": "(Required) "
+						},
+						{
+							"key": "use_last_revision",
+							"value": "true"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List history",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Each banner has the required properties\", function () {",
+							"    pm.expect(pm.response.json().length).to.equal(1);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"description": "Токен админа",
+						"key": "token",
+						"value": "{{admin_token}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{SERVER_ADDR}}/banner/versions/:id",
+					"host": [
+						"{{SERVER_ADDR}}"
+					],
+					"path": [
+						"banner",
+						"versions",
+						":id"
+					],
+					"variable": [
+						{
+							"key": "id",
+							"value": "{{id}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Select version - OK",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"description": "Токен админа",
+						"key": "token",
+						"value": "{{admin_token}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{SERVER_ADDR}}/banner/versions/:id/activate?version=1",
+					"host": [
+						"{{SERVER_ADDR}}"
+					],
+					"path": [
+						"banner",
+						"versions",
+						":id",
+						"activate"
+					],
+					"query": [
+						{
+							"key": "version",
+							"value": "1"
+						}
+					],
+					"variable": [
+						{
+							"key": "id",
+							"value": "{{id}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List - check version changed",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Each banner has the required properties\", function () {",
+							"    pm.expect(pm.response.json().length).to.equal(1);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"description": "Токен админа",
+						"key": "token",
+						"value": "{{admin_token}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{SERVER_ADDR}}/banner?feature_id=1",
+					"host": [
+						"{{SERVER_ADDR}}"
+					],
+					"path": [
+						"banner"
+					],
+					"query": [
+						{
+							"key": "feature_id",
+							"value": "1"
+						},
+						{
+							"key": "tag_id",
+							"value": "1",
+							"disabled": true
+						},
+						{
+							"key": "limit",
+							"value": "1",
+							"disabled": true
+						},
+						{
+							"key": "offset",
+							"value": "<integer>",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Created for test",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(201);",
+							"    ",
+							"});",
+							"pm.test(\"Response contains an integer ID\", function () {",
+							"    var responseData = pm.response.json();",
+							"    pm.expect(responseData).to.have.property('banner_id').that.is.a('number');",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"description": "Токен админа",
+						"key": "token",
+						"value": "{{admin_token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"tag_ids\": [\n    1,\n    2\n  ],\n  \"feature_id\": 3,\n  \"content\": {\n    \"magna_9\": \"velit quis proident\"\n  },\n  \"is_active\": true\n}",
+					"options": {
+						"raw": {
+							"headerFamily": "json",
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{SERVER_ADDR}}/banner",
+					"host": [
+						"{{SERVER_ADDR}}"
+					],
+					"path": [
+						"banner"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Created for test 2",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Fixed ReferenceError by defining the variable responseData",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(201);",
+							"    ",
+							"});",
+							"pm.test(\"Response contains an integer ID\", function () {",
+							"    var responseData = pm.response.json();",
+							"    pm.expect(responseData).to.have.property('banner_id').that.is.a('number');",
+							"    pm.collectionVariables.set(\"id\", responseData.banner_id);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"description": "Токен админа",
+						"key": "token",
+						"value": "{{admin_token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"tag_ids\": [\n    1,\n    2\n  ],\n  \"feature_id\": 24,\n  \"content\": {\n    \"magna_9\": \"velit quis proident\"\n  },\n  \"is_active\": true\n}",
+					"options": {
+						"raw": {
+							"headerFamily": "json",
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{SERVER_ADDR}}/banner",
+					"host": [
+						"{{SERVER_ADDR}}"
+					],
+					"path": [
+						"banner"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete - ok",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response should be not found\", function () {",
+							"    pm.response.to.have.status(204);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"description": "Токен админа",
+						"key": "token",
+						"value": "{{admin_token}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{SERVER_ADDR}}/banner/:id",
+					"host": [
+						"{{SERVER_ADDR}}"
+					],
+					"path": [
+						"banner",
+						":id"
+					],
+					"variable": [
+						{
+							"key": "id",
+							"value": "{{id}}",
+							"description": "(Required) "
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List all",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Each banner has the required properties\", function () {",
+							"    pm.expect(pm.response.json().length).to.equal(2);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"description": "Токен админа",
+						"key": "token",
+						"value": "{{admin_token}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{SERVER_ADDR}}/banner",
+					"host": [
+						"{{SERVER_ADDR}}"
+					],
+					"path": [
+						"banner"
+					],
+					"query": [
+						{
+							"key": "feature_id",
+							"value": "111",
+							"disabled": true
+						},
+						{
+							"key": "tag_id",
+							"value": "1",
+							"disabled": true
+						},
+						{
+							"key": "limit",
+							"value": "1",
+							"disabled": true
+						},
+						{
+							"key": "offset",
+							"value": "<integer>",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Limit",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 404 \", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Each banner has the required properties\", function () {",
+							"    pm.expect(pm.response.json().length).to.equal(1);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"description": "Токен админа",
+						"key": "token",
+						"value": "{{admin_token}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{SERVER_ADDR}}/banner?tag_id=1&limit=1",
+					"host": [
+						"{{SERVER_ADDR}}"
+					],
+					"path": [
+						"banner"
+					],
+					"query": [
+						{
+							"key": "feature_id",
+							"value": "111",
+							"disabled": true
+						},
+						{
+							"key": "tag_id",
+							"value": "1"
+						},
+						{
+							"key": "limit",
+							"value": "1"
+						},
+						{
+							"key": "offset",
+							"value": "<integer>",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Offset",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 404 \", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Each banner has the required properties\", function () {",
+							"    pm.expect(pm.response.json().length).to.equal(1);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"description": "Токен админа",
+						"key": "token",
+						"value": "{{admin_token}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{SERVER_ADDR}}/banner?tag_id=1&offset=1",
+					"host": [
+						"{{SERVER_ADDR}}"
+					],
+					"path": [
+						"banner"
+					],
+					"query": [
+						{
+							"key": "feature_id",
+							"value": "111",
+							"disabled": true
+						},
+						{
+							"key": "tag_id",
+							"value": "1"
+						},
+						{
+							"key": "limit",
+							"value": "<integer>",
+							"disabled": true
+						},
+						{
+							"key": "offset",
+							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DeleteByTag",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status is 'accepted'\", function () {",
+							"  pm.expect(pm.response.to.have.status(202));",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"description": "Токен админа",
+						"key": "token",
+						"value": "{{admin_token}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{SERVER_ADDR}}/banner/del?tag_id=1",
+					"host": [
+						"{{SERVER_ADDR}}"
+					],
+					"path": [
+						"banner",
+						"del"
+					],
+					"query": [
+						{
+							"key": "tag_id",
+							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List all - check deletion",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 404 \", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response body is JSON and is null\", function () {",
+							"    pm.expect(pm.response).to.have.jsonBody(null);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"description": "Токен админа",
+						"key": "token",
+						"value": "{{admin_token}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{SERVER_ADDR}}/banner",
+					"host": [
+						"{{SERVER_ADDR}}"
+					],
+					"path": [
+						"banner"
+					],
+					"query": [
+						{
+							"key": "feature_id",
+							"value": "111",
+							"disabled": true
+						},
+						{
+							"key": "tag_id",
+							"value": "1",
+							"disabled": true
+						},
+						{
+							"key": "limit",
+							"value": "1",
+							"disabled": true
+						},
+						{
+							"key": "offset",
+							"value": "<integer>",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "user_token",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "admin_token",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "id",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

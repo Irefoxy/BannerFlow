@@ -1,9 +1,4 @@
-FROM golang:1.21.8-alpine3.19 as builder
-RUN apk add --no-cache git
+FROM postman/newman_alpine33
 WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
-COPY cmd ./cmd/
-COPY internal ./internal/
-COPY pkg ./pkg/
-COPY ./tests ./tests
+COPY ./tests/postman_collection ./tests
+ENTRYPOINT newman run tests/test.postman_collection.json --env-var "SERVER_ADDR=$SERVER_ADDR"

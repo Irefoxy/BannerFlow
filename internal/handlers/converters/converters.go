@@ -84,7 +84,8 @@ func setZeroValueIfEmpty(arg *int) int {
 
 func BannersExtToInnerResponses(banners []models.BannerExt) []api.BannerResponse {
 	var result []api.BannerResponse
-	for _, banner := range banners {
+	for _, bn := range banners {
+		banner := bn
 		result = append(result, api.BannerResponse{
 			BannerId:  &banner.BannerId,
 			TagIds:    &banner.TagIds,
@@ -106,7 +107,8 @@ func ConstructGet201Response(id int) *api.BannerIdResponse {
 
 func HistoryBannersToVersionResponse(banners []models.HistoryBanner) []api.BannerVersionResponse {
 	var result []api.BannerVersionResponse
-	for _, banner := range banners {
+	for _, bn := range banners {
+		banner := bn
 		result = append(result, api.BannerVersionResponse{
 			Content:   &banner.Content,
 			TagIds:    &banner.TagIds,

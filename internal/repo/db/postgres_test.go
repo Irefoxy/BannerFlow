@@ -215,7 +215,7 @@ func (s *PostgresTest) TestGetHistory02() {
 	s.pool.ExpectQuery(regexp.QuoteMeta(selectHistoryQuery)).WithArgs(id).WillReturnRows(rows)
 	banners, err := s.postgres.GetHistoryForId(context.Background(), id)
 	s.Assert().NoError(err)
-	s.Assert().Nil(banners)
+	s.Assert().Empty(banners)
 }
 
 // TestGetHistory03 tests case OK
@@ -341,7 +341,7 @@ func (s *PostgresTest) TestDelete03() {
 	s.Assert().NoError(err)
 }
 
-// TestSelectBannerVersion00 tests case ping fails
+// TestListBanners00 tests case ping fails
 func (s *PostgresTest) TestListBanners00() {
 	options := &models.BannerListOptions{
 		BannerIdentOptions: models.BannerIdentOptions{
@@ -358,7 +358,7 @@ func (s *PostgresTest) TestListBanners00() {
 	s.Assert().Nil(banners)
 }
 
-// TestSelectBannerVersion01 tests case exec fails
+// TestListBanners01 tests case query fails
 func (s *PostgresTest) TestListBanners01() {
 	options := &models.BannerListOptions{
 		BannerIdentOptions: models.BannerIdentOptions{
@@ -379,8 +379,29 @@ func (s *PostgresTest) TestListBanners01() {
 	s.Assert().Nil(banners)
 }
 
-// TestSelectBannerVersion02 tests case OK
+// TestListBanners02 tests case query returns nothing
 func (s *PostgresTest) TestListBanners02() {
+	options := &models.BannerListOptions{
+		BannerIdentOptions: models.BannerIdentOptions{
+			FeatureId: 1,
+			TagId:     1,
+		},
+		Limit:  12,
+		Offset: 10,
+	}
+	query, args := buildListQuery(options)
+	rows := pgxmock.NewRows([]string{"id", "content", "created", "updated", "featureId", "tagIds", "isactive"})
+
+	s.pool.ExpectPing()
+	s.pool.ExpectQuery(regexp.QuoteMeta(query)).WithArgs(args...).WillReturnRows(rows)
+
+	banners, err := s.postgres.List(context.Background(), options)
+	s.Assert().NoError(err)
+	s.Assert().Empty(banners)
+}
+
+// TestListBanners03 tests case OK
+func (s *PostgresTest) TestListBanners03() {
 	options := &models.BannerListOptions{
 		BannerIdentOptions: models.BannerIdentOptions{
 			FeatureId: 1,
